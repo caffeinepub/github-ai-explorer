@@ -1,0 +1,199 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Add Recommendations Feed, Roadmap Extractor, README Generator, Termux Integration, Docker Support, and GitHub Token Settings",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add a Personalized Recommendations Feed that analyzes bookmarked and recently viewed repositories to surface similar repos using language, topics, and metadata",
+      "acceptanceCriteria": [
+        "A 'Recommendations' section or page is accessible from the main navigation.",
+        "When the user has at least one bookmark, recommended repos are displayed based on matching languages and topics.",
+        "Each recommendation shows the repo name, description, stars, language, and a bookmark button.",
+        "If the user has no bookmarks or viewed history, an appropriate empty state is shown encouraging them to explore.",
+        "Recommendations update when bookmarks change."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/RecommendationsPage.tsx",
+          "operation": "create",
+          "description": "Create a new page component that fetches the user's bookmarks via useGetBookmarks, analyzes them to extract languages and topics, queries the GitHub API for similar repositories using the existing githubApi.searchRepositories function with language and topic filters, deduplicates against already-bookmarked repos, and renders the results as RepositoryCard components. Display EmptyState when the user has no bookmarks, prompting them to explore Trending or Search. Use ErrorState for API failures. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/recommendationEngine.ts",
+          "operation": "create",
+          "description": "Create a utility function that accepts an array of BookmarkEntry objects, extracts unique languages and topics from the bookmarked repositories (stored in notes or fetched metadata), and returns a prioritized list of search queries to find similar repos. Use a scoring algorithm that favors the most common languages and topics across bookmarks."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register a new route '/recommendations' that renders the RecommendationsPage component. Add the route definition in the router configuration alongside existing routes like /search, /trending, and /bookmarks."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Add a 'Recommendations' navigation link in the header's nav section, positioned after the Bookmarks link. The link should navigate to '/recommendations' and be accessible to all authenticated users. Verify the authorization component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Add a Project Roadmap Extractor on the repository detail page that uses GitHub API data to generate and display a visual roadmap based on milestones, issues, and labels",
+      "acceptanceCriteria": [
+        "A 'Roadmap' tab or expandable panel is available on the RepoDetailsPage.",
+        "The roadmap displays milestones (open and closed) with their associated issue counts and due dates if available.",
+        "Open issues with labels like 'enhancement', 'feature', 'roadmap' are grouped and shown as upcoming items.",
+        "A progress indicator shows ratio of closed to open issues per milestone.",
+        "If no milestones or issues are available, a friendly empty state is shown.",
+        "The roadmap is generated client-side using the GitHub API without any external AI service."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/RoadmapPanel.tsx",
+          "operation": "create",
+          "description": "Create an expandable panel component that accepts a Repository prop, fetches milestones and issues from the GitHub API using new service functions, and displays a visual roadmap. Group milestones with progress bars showing closed vs open issue ratios, due dates, and titles. Display open issues labeled 'enhancement', 'feature', or 'roadmap' as upcoming roadmap items. Show EmptyState when no milestones or relevant issues exist. Use skeleton loaders during fetch."
+        },
+        {
+          "path": "frontend/src/services/githubApi.ts",
+          "operation": "modify",
+          "description": "Add new functions getMilestones(owner: string, repo: string) and getIssues(owner: string, repo: string, labels?: string[]) that fetch milestone and issue data from the GitHub REST API with token-based authentication. Return typed responses matching new TypeScript interfaces for Milestone and Issue."
+        },
+        {
+          "path": "frontend/src/types/github.ts",
+          "operation": "modify",
+          "description": "Add TypeScript interfaces for Milestone (title, description, state, due_on, open_issues, closed_issues) and Issue (title, number, state, labels, created_at, html_url) to support roadmap data structures."
+        },
+        {
+          "path": "frontend/src/pages/RepoDetailsPage.tsx",
+          "operation": "modify",
+          "description": "Add a new 'Roadmap' tab in the tabbed interface alongside the existing README and Contributors tabs. When the Roadmap tab is active, render the RoadmapPanel component, passing the current repository data as a prop."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add a One-Click README Generator on the repository detail page that produces a professional README.md file using rule-based logic from repo metadata and file structure",
+      "acceptanceCriteria": [
+        "A 'Generate README' button or tab is present on the RepoDetailsPage.",
+        "Clicking it generates a README.md with standard sections: title, description, tech stack badges, installation steps, usage, contributing, and license.",
+        "The generated content is rendered in a CodeBlock component with copy-to-clipboard functionality.",
+        "A download button allows saving the README.md file directly.",
+        "If the user has a GitHub token stored, a 'Commit to Repo' option is shown using the existing CommitToForkButton pattern.",
+        "Generation is purely client-side using already-fetched repo data and the existing techStackDetector and setupInstructionsGenerator utilities."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/readmeGenerator.ts",
+          "operation": "create",
+          "description": "Create a utility function generateReadme that accepts a Repository object and RepoFileTree, uses techStackDetector to identify the stack, generates sections for title, description, tech stack badges (with shield.io URLs), installation steps (via setupInstructionsGenerator), usage examples, contributing guidelines, and license info. Return a formatted Markdown string representing a complete README.md."
+        },
+        {
+          "path": "frontend/src/components/ReadmeGeneratorPanel.tsx",
+          "operation": "create",
+          "description": "Create a panel component that accepts a Repository and RepoFileTree prop, generates a README.md on mount using the readmeGenerator utility, and displays the result in a CodeBlock component with copy and download functionality. If the user is authenticated and has a GitHub token (via useGetMyGithubToken), show a CommitToForkButton that commits the generated README.md to a forked repo using the existing CommitToForkButton pattern."
+        },
+        {
+          "path": "frontend/src/pages/RepoDetailsPage.tsx",
+          "operation": "modify",
+          "description": "Add a new 'Generate README' tab in the tabbed interface. When active, render the ReadmeGeneratorPanel component, passing the repository data and file tree fetched from the existing AISetupAssistant's file tree fetch logic or a new dedicated fetch."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add a Termux Integration panel that generates ready-to-copy Termux shell commands using GitHub CLI to auto-fork, clone, and install dependencies",
+      "acceptanceCriteria": [
+        "A 'Termux' tab or section is present on the RepoDetailsPage.",
+        "The panel displays a multi-step shell script including: gh auth login, gh repo fork <owner/repo> --clone, cd into the cloned directory, and install commands based on detected stack (npm install, pip install -r requirements.txt, etc.).",
+        "The script is displayed in a CodeBlock component with copy-to-clipboard and download functionality.",
+        "Commands are generated client-side using existing tech stack detection utilities.",
+        "A note explains that users should paste these commands into their Termux terminal."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/termuxScriptGenerator.ts",
+          "operation": "create",
+          "description": "Create a utility function generateTermuxScript that accepts a Repository object and RepoFileTree, detects the tech stack using techStackDetector, and generates a bash script string. The script includes: gh auth login check, gh repo fork with --clone flag, cd into the cloned directory (repo name), and stack-specific install commands (npm install, pip install -r requirements.txt, bundle install, cargo build, go mod download, etc.). Return the script as a formatted string with comments explaining each step."
+        },
+        {
+          "path": "frontend/src/components/TermuxIntegrationPanel.tsx",
+          "operation": "create",
+          "description": "Create a panel component that accepts a Repository and RepoFileTree prop, generates a Termux script on mount using termuxScriptGenerator, and displays the result in a CodeBlock component with copy and download (.sh file) functionality. Include an info banner explaining that users should paste these commands into their Termux terminal and have GitHub CLI installed."
+        },
+        {
+          "path": "frontend/src/pages/RepoDetailsPage.tsx",
+          "operation": "modify",
+          "description": "Add a new 'Termux' tab in the tabbed interface. When active, render the TermuxIntegrationPanel component, passing the repository data and file tree."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Extend Docker support to auto-generate both a Dockerfile and a docker-compose.yml using and expanding existing utilities",
+      "acceptanceCriteria": [
+        "A 'Docker' tab or section is present on the RepoDetailsPage.",
+        "Both a Dockerfile and a docker-compose.yml are generated and displayed in separate CodeBlock components with copy and download options.",
+        "The Dockerfile is appropriate for the detected primary language/stack (Node.js, Python, Go, Rust, Ruby, etc.).",
+        "The docker-compose.yml includes detected services (Postgres, Redis, MongoDB) per the existing dockerComposeGenerator logic.",
+        "If the user has a GitHub token, a 'Commit to Fork' option is available using the CommitToForkButton pattern.",
+        "A note is shown for Docker Mobile users explaining how to use these files on mobile Docker environments."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/dockerfileGenerator.ts",
+          "operation": "create",
+          "description": "Create a utility function generateDockerfile that accepts a Repository object and RepoFileTree, detects the primary language and dependencies using techStackDetector and file tree analysis, and generates an appropriate Dockerfile string. Support Node.js (with npm/yarn/pnpm), Python (with pip/poetry), Go, Rust (cargo), Ruby (bundler), Java (Maven/Gradle), and generic multi-stage build patterns. Return the Dockerfile content as a string."
+        },
+        {
+          "path": "frontend/src/components/DockerPanel.tsx",
+          "operation": "create",
+          "description": "Create a panel component that accepts a Repository and RepoFileTree prop. Generate both a Dockerfile (using dockerfileGenerator) and a docker-compose.yml (using the existing dockerComposeGenerator) on mount. Display both files in separate CodeBlock components with copy and download functionality. If the user is authenticated and has a GitHub token (via useGetMyGithubToken), show a CommitToForkButton that commits both files to a forked repo. Include an info banner explaining usage on mobile Docker environments."
+        },
+        {
+          "path": "frontend/src/pages/RepoDetailsPage.tsx",
+          "operation": "modify",
+          "description": "Add a new 'Docker' tab in the tabbed interface. When active, render the DockerPanel component, passing the repository data and file tree. Ensure the file tree is fetched and available before rendering (reuse the AISetupAssistant's file tree fetch logic or create a shared hook)."
+        },
+        {
+          "path": "frontend/src/utils/dockerComposeGenerator.ts",
+          "operation": "modify",
+          "description": "Review and ensure the existing dockerComposeGenerator function is properly exported and supports all required service detection (Postgres, Redis, MongoDB). If needed, extend it to handle additional services or configurations based on detected environment variables and dependencies."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Add GitHub Personal Access Token settings UI accessible from the user dropdown menu, allowing users to manage their stored PAT",
+      "acceptanceCriteria": [
+        "A 'Token Settings' or 'GitHub Token' option is present in the authenticated user dropdown menu in the Layout header.",
+        "Clicking it opens the existing GithubTokenSettings dialog component.",
+        "Users can enter a new PAT, view the current one masked (e.g., ghp_••••••••••••1234), update it, or remove it.",
+        "The PAT is saved to localStorage and read by githubApi.ts for all authenticated API calls.",
+        "A success/error toast notification is shown on save or removal.",
+        "The token settings dialog is also accessible from the ForkButton tooltip when no token is set, prompting the user to add one."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Add a 'GitHub Token' or 'Token Settings' menu item in the authenticated user dropdown menu (currently showing user profile name and logout option). Clicking it should open the GithubTokenSettings dialog. Position it between the profile name display and the logout button. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/GithubTokenSettings.tsx",
+          "operation": "modify",
+          "description": "Review and ensure the existing GithubTokenSettings dialog component properly integrates with the useGetMyGithubToken, useSaveMyGithubToken, and useRemoveMyGithubToken hooks from useQueries.ts. Ensure the token is displayed masked (e.g., ghp_••••••••••••1234), and that save/remove actions trigger toast notifications. The component should accept an isOpen and onClose prop for dialog state management from the Layout parent."
+        },
+        {
+          "path": "frontend/src/components/ForkButton.tsx",
+          "operation": "modify",
+          "description": "Review the existing ForkButton component and ensure the tooltip for missing token scenarios includes a clickable action or link that opens the GithubTokenSettings dialog. Coordinate with Layout.tsx to expose a shared dialog state or use a URL parameter/event to trigger the dialog open from ForkButton."
+        },
+        {
+          "path": "frontend/src/services/githubApi.ts",
+          "operation": "modify",
+          "description": "Review and ensure that all authenticated GitHub API calls (fork, commit, etc.) read the stored GitHub PAT from the backend via the useGetMyGithubToken hook or localStorage fallback, and include it in the Authorization header. Confirm that the token is used consistently across all API functions that require authentication."
+        }
+      ]
+    }
+  ]
+}

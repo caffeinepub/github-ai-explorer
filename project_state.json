@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "GitHub Explorer web app with AI-powered repo analysis features. Users can search/explore GitHub repos and use various tools including personalized recommendations, roadmap extraction, README generation, Termux command generation for auto-forking, Docker file generation, and GitHub Personal Access Token settings.",
+  "architectural_notes": [
+    "GitHub Personal Access Token is stored locally in the browser (not server-side)",
+    "Roadmap Extractor and README Generator use rule-based/heuristic approach via GitHub API, no external AI service",
+    "Termux integration generates copyable shell commands only (no direct shell execution from web)"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Personalized Recommendations Feed based on saved/viewed repos",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Project Roadmap Extractor using GitHub API heuristics (issues, milestones, file structure)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "One-Click README Generator using repo metadata and language info",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Termux Integration: generate ready-to-copy GitHub CLI commands for auto-forking repos",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Docker Support: auto-generate Dockerfile and docker-compose.yml for selected repos",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "GitHub Access Token Settings page to store Personal Access Token locally in the browser",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add a Personalized Recommendations Feed page or section that analyzes the user's bookmarked and recently viewed repositories and surfaces similar repos the user might like, using language, topics, and metadata from the GitHub API.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add a Project Roadmap Extractor feature on the repository detail page that uses a heuristic/rule-based approach with GitHub API data (open/closed issues, milestones, labels, and file structure) to generate and display a visual roadmap of where the project is headed.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Add a One-Click README Generator on the repository detail page that produces a professional README.md file using rule-based logic drawing from the repo's name, description, primary language, detected tech stack, topics, and file structure (e.g., presence of package.json, Dockerfile, requirements.txt).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Add a Termux Integration panel on the repository detail page that generates ready-to-copy Termux shell commands using GitHub CLI (gh) to auto-fork the displayed repository, clone it locally, and optionally install dependencies based on the detected tech stack.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Extend the existing Docker support on the repository detail page to auto-generate both a Dockerfile and a docker-compose.yml for the selected repository based on its detected tech stack, environment variables, and dependencies, using and expanding the existing dockerComposeGenerator and setupScriptGenerator utilities.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Add a GitHub Personal Access Token (PAT) settings UI accessible from the user dropdown menu in the Layout header, allowing authenticated users to enter, view (masked), update, and remove their stored GitHub PAT, persisted locally in the browser (localStorage), and used automatically for API calls throughout the app.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "GitHub Explorer",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

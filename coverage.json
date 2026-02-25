@@ -1,0 +1,94 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T08:47:46.933Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 6,
+    "implemented": 0,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Add a Personalized Recommendations Feed page or section that analyzes the user's bookmarked and recently viewed repositories and surfaces similar repos the user might like, using language, topics, and metadata from the GitHub API.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/pages/RecommendationsPage.tsx",
+          "frontend/src/utils/recommendationEngine.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/Layout.tsx"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Add a Project Roadmap Extractor feature on the repository detail page that uses a heuristic/rule-based approach with GitHub API data (open/closed issues, milestones, labels, and file structure) to generate and display a visual roadmap of where the project is headed.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/components/RoadmapPanel.tsx",
+          "frontend/src/services/githubApi.ts",
+          "frontend/src/types/github.ts",
+          "frontend/src/pages/RepoDetailsPage.tsx"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add a One-Click README Generator on the repository detail page that produces a professional README.md file using rule-based logic drawing from the repo's name, description, primary language, detected tech stack, topics, and file structure (e.g., presence of package.json, Dockerfile, requirements.txt).",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/utils/readmeGenerator.ts",
+          "frontend/src/components/ReadmeGeneratorPanel.tsx",
+          "frontend/src/pages/RepoDetailsPage.tsx"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Add a Termux Integration panel on the repository detail page that generates ready-to-copy Termux shell commands using GitHub CLI (gh) to auto-fork the displayed repository, clone it locally, and optionally install dependencies based on the detected tech stack.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/utils/termuxScriptGenerator.ts",
+          "frontend/src/components/TermuxIntegrationPanel.tsx",
+          "frontend/src/pages/RepoDetailsPage.tsx"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Extend the existing Docker support on the repository detail page to auto-generate both a Dockerfile and a docker-compose.yml for the selected repository based on its detected tech stack, environment variables, and dependencies, using and expanding the existing dockerComposeGenerator and setupScriptGenerator utilities.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/utils/dockerfileGenerator.ts",
+          "frontend/src/components/DockerPanel.tsx",
+          "frontend/src/pages/RepoDetailsPage.tsx",
+          "frontend/src/utils/dockerComposeGenerator.ts"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Add a GitHub Personal Access Token (PAT) settings UI accessible from the user dropdown menu in the Layout header, allowing authenticated users to enter, view (masked), update, and remove their stored GitHub PAT, persisted locally in the browser (localStorage), and used automatically for API calls throughout the app.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/components/Layout.tsx",
+          "frontend/src/components/GithubTokenSettings.tsx",
+          "frontend/src/components/ForkButton.tsx",
+          "frontend/src/services/githubApi.ts"
+        ],
+        "matchedFiles": []
+      }
+    ]
+  },
+  "changedFiles": [
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-implementation-plan.json",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

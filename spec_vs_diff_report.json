@@ -1,0 +1,61 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T08:47:46.930Z",
+  "summary": "The diff only modifies project_state.json, which appears to be a planning/tracking file that records feature requests as 'pending'. None of the actual frontend implementation files (components, pages, services, utilities) have been added or modified. All six requirements (REQ-1 through REQ-6) are listed as pending feature requests in the project state file but have not been implemented.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Add a Personalized Recommendations Feed page or section that analyzes bookmarked and recently viewed repositories to surface similar repos.",
+      "reason": "Only recorded as a pending entry in project_state.json. No frontend component, page, or service files were added or modified to implement this feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Add a Project Roadmap Extractor feature on the repository detail page using GitHub API data (issues, milestones, labels, file structure).",
+      "reason": "Only recorded as a pending entry in project_state.json. No frontend component or service files were added or modified to implement this feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Add a One-Click README Generator on the repository detail page producing a professional README.md using rule-based logic.",
+      "reason": "Only recorded as a pending entry in project_state.json. No frontend component or utility files were added or modified to implement this feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Add a Termux Integration panel on the repository detail page that generates ready-to-copy Termux shell commands using GitHub CLI.",
+      "reason": "Only recorded as a pending entry in project_state.json. No frontend component or utility files were added or modified to implement this feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Extend Docker support on the repository detail page to auto-generate both a Dockerfile and a docker-compose.yml.",
+      "reason": "Only recorded as a pending entry in project_state.json. No frontend component or utility files were added or modified to implement this feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Add a GitHub Personal Access Token (PAT) settings UI accessible from the user dropdown menu in the Layout header.",
+      "reason": "Only recorded as a pending entry in project_state.json. No frontend component, layout, or service files were added or modified to implement this feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    }
+  ],
+  "hallucinated_features": [],
+  "confidence": 0.97,
+  "changed_files": [
+    "project_state.json"
+  ]
+}

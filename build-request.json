@@ -1,0 +1,151 @@
+{
+  "kind": "build_request",
+  "title": "Add Recommendations Feed, Roadmap Extractor, README Generator, Termux Integration, Docker Support, and GitHub Token Settings",
+  "projectName": "GitHub Explorer",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Add a Personalized Recommendations Feed page or section that analyzes the user's bookmarked and recently viewed repositories and surfaces similar repos the user might like, using language, topics, and metadata from the GitHub API.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-1"
+        ],
+        "quotes": [
+          "#4 Personalized Recommendations Feed — based on your saved/viewed repos"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Recommendations' section or page is accessible from the main navigation.",
+        "When the user has at least one bookmark, recommended repos are displayed based on matching languages and topics.",
+        "Each recommendation shows the repo name, description, stars, language, and a bookmark button.",
+        "If the user has no bookmarks or viewed history, an appropriate empty state is shown encouraging them to explore.",
+        "Recommendations update when bookmarks change."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add a Project Roadmap Extractor feature on the repository detail page that uses a heuristic/rule-based approach with GitHub API data (open/closed issues, milestones, labels, and file structure) to generate and display a visual roadmap of where the project is headed.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-1"
+        ],
+        "quotes": [
+          "#9 Project Roadmap Extractor — Uses GitHub API data (issues, milestones, file structure) with a heuristic/rule-based approach to generate a visual roadmap"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Roadmap' tab or expandable panel is available on the RepoDetailsPage.",
+        "The roadmap displays milestones (open and closed) with their associated issue counts and due dates if available.",
+        "Open issues with labels like 'enhancement', 'feature', 'roadmap' are grouped and shown as upcoming items.",
+        "A progress indicator shows ratio of closed to open issues per milestone.",
+        "If no milestones or issues are available, a friendly empty state is shown.",
+        "The roadmap is generated client-side using the GitHub API without any external AI service."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add a One-Click README Generator on the repository detail page that produces a professional README.md file using rule-based logic drawing from the repo's name, description, primary language, detected tech stack, topics, and file structure (e.g., presence of package.json, Dockerfile, requirements.txt).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-1"
+        ],
+        "quotes": [
+          "#14 One-Click README Generator — Rule-based generation using repo structure, language, and metadata from the GitHub API"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Generate README' button or tab is present on the RepoDetailsPage.",
+        "Clicking it generates a README.md with standard sections: title, description, tech stack badges, installation steps, usage, contributing, and license.",
+        "The generated content is rendered in a CodeBlock component with copy-to-clipboard functionality.",
+        "A download button allows saving the README.md file directly.",
+        "If the user has a GitHub token stored, a 'Commit to Repo' option is shown using the existing CommitToForkButton pattern.",
+        "Generation is purely client-side using already-fetched repo data and the existing techStackDetector and setupInstructionsGenerator utilities."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add a Termux Integration panel on the repository detail page that generates ready-to-copy Termux shell commands using GitHub CLI (gh) to auto-fork the displayed repository, clone it locally, and optionally install dependencies based on the detected tech stack.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-1"
+        ],
+        "quotes": [
+          "Termux Integration — Generates ready-to-copy Termux commands/scripts (e.g., GitHub CLI commands to auto-fork a repo) that users can paste directly"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Termux' tab or section is present on the RepoDetailsPage.",
+        "The panel displays a multi-step shell script including: gh auth login, gh repo fork <owner/repo> --clone, cd into the cloned directory, and install commands based on detected stack (npm install, pip install -r requirements.txt, etc.).",
+        "The script is displayed in a CodeBlock component with copy-to-clipboard and download functionality.",
+        "Commands are generated client-side using existing tech stack detection utilities.",
+        "A note explains that users should paste these commands into their Termux terminal."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Extend the existing Docker support on the repository detail page to auto-generate both a Dockerfile and a docker-compose.yml for the selected repository based on its detected tech stack, environment variables, and dependencies, using and expanding the existing dockerComposeGenerator and setupScriptGenerator utilities.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-1"
+        ],
+        "quotes": [
+          "Docker Support — auto-generates Dockerfile & docker-compose.yml for selected repos"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Docker' tab or section is present on the RepoDetailsPage.",
+        "Both a Dockerfile and a docker-compose.yml are generated and displayed in separate CodeBlock components with copy and download options.",
+        "The Dockerfile is appropriate for the detected primary language/stack (Node.js, Python, Go, Rust, Ruby, etc.).",
+        "The docker-compose.yml includes detected services (Postgres, Redis, MongoDB) per the existing dockerComposeGenerator logic.",
+        "If the user has a GitHub token, a 'Commit to Fork' option is available using the CommitToForkButton pattern.",
+        "A note is shown for Docker Mobile users explaining how to use these files on mobile Docker environments."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add a GitHub Personal Access Token (PAT) settings UI accessible from the user dropdown menu in the Layout header, allowing authenticated users to enter, view (masked), update, and remove their stored GitHub PAT, persisted locally in the browser (localStorage), and used automatically for API calls throughout the app.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-1"
+        ],
+        "quotes": [
+          "GitHub Access Token Settings — settings page to save your PAT locally in the browser"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Token Settings' or 'GitHub Token' option is present in the authenticated user dropdown menu in the Layout header.",
+        "Clicking it opens the existing GithubTokenSettings dialog component.",
+        "Users can enter a new PAT, view the current one masked (e.g., ghp_••••••••••••1234), update it, or remove it.",
+        "The PAT is saved to localStorage and read by githubApi.ts for all authenticated API calls.",
+        "A success/error toast notification is shown on save or removal.",
+        "The token settings dialog is also accessible from the ForkButton tooltip when no token is set, prompting the user to add one."
+      ]
+    }
+  ],
+  "constraints": [
+    "All features must be implemented client-side; no new backend endpoints are required unless data persistence beyond localStorage is explicitly needed.",
+    "Use existing utilities (techStackDetector, dockerComposeGenerator, setupScriptGenerator, setupInstructionsGenerator, repoInsights) wherever applicable — do not duplicate logic.",
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "GitHub API calls must respect existing token-based auth patterns in frontend/src/services/githubApi.ts.",
+    "No external AI service integrations — all analysis must be rule-based or heuristic using GitHub API data."
+  ],
+  "nonGoals": [
+    "Real-time notifications or push alerts for trending repos.",
+    "Team workspaces or shared collections.",
+    "AI Interview Prep Mode or Fork Diff Tracker.",
+    "Backend storage of GitHub PAT (browser localStorage only).",
+    "Direct execution of shell commands or Termux/Docker commands from within the web app.",
+    "Any external AI API calls (OpenAI, Anthropic, etc.)."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
