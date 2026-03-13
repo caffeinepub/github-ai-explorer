@@ -1,20 +1,20 @@
-import React from 'react';
+import { Button } from "@/components/ui/button";
 import {
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  File,
   Folder,
   FolderOpen,
-  File,
-  ChevronRight,
-  ChevronDown,
-  Copy,
-  Terminal,
-  RefreshCw,
-  ArrowUp,
-  X,
   Loader2,
-} from 'lucide-react';
-import { useFileBrowser } from '../../hooks/useFileBrowser';
-import { Button } from '@/components/ui/button';
-import type { FileEntry } from '../../services/bridgeApi';
+  RefreshCw,
+  Terminal,
+  X,
+} from "lucide-react";
+import React from "react";
+import { useFileBrowser } from "../../hooks/useFileBrowser";
+import type { FileEntry } from "../../services/bridgeApi";
 
 interface FileBrowserPanelProps {
   bridgeConnected: boolean;
@@ -41,10 +41,11 @@ function FileRow({
   onCopy: () => void;
   onOpenInTerminal: () => void;
 }) {
-  const isDir = entry.type === 'directory';
+  const isDir = entry.type === "directory";
   return (
     <div className="group flex items-center gap-1 px-2 py-0.5 hover:bg-white/5 rounded cursor-pointer text-[11px] font-mono">
       <button
+        type="button"
         onClick={isDir ? onToggle : undefined}
         className="flex items-center gap-1 flex-1 min-w-0 text-left"
       >
@@ -69,11 +70,14 @@ function FileRow({
         )}
         <span className="truncate text-white/70 ml-1">{entry.name}</span>
         {!isDir && (
-          <span className="ml-auto text-white/25 shrink-0 pl-1">{formatSize(entry.size)}</span>
+          <span className="ml-auto text-white/25 shrink-0 pl-1">
+            {formatSize(entry.size)}
+          </span>
         )}
       </button>
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         <button
+          type="button"
           onClick={onCopy}
           title="Copy path"
           className="p-0.5 rounded hover:bg-white/10 text-white/40 hover:text-white/70"
@@ -82,6 +86,7 @@ function FileRow({
         </button>
         {isDir && (
           <button
+            type="button"
             onClick={onOpenInTerminal}
             title="Open in terminal"
             className="p-0.5 rounded hover:bg-white/10 text-neon-green/60 hover:text-neon-green"
@@ -94,9 +99,23 @@ function FileRow({
   );
 }
 
-export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }: FileBrowserPanelProps) {
-  const { currentPath, entries, isLoading, error, expandedPaths, navigate, toggleExpand, copyPath, goUp, refresh } =
-    useFileBrowser(bridgeConnected);
+export function FileBrowserPanel({
+  bridgeConnected,
+  onClose,
+  onOpenInTerminal,
+}: FileBrowserPanelProps) {
+  const {
+    currentPath,
+    entries,
+    isLoading,
+    error,
+    expandedPaths,
+    navigate,
+    toggleExpand,
+    copyPath,
+    goUp,
+    refresh,
+  } = useFileBrowser(bridgeConnected);
 
   return (
     <div className="flex flex-col h-full bg-[#0d1117] border-r border-white/10 w-64 shrink-0">
@@ -104,7 +123,9 @@ export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }:
       <div className="flex items-center justify-between px-2 py-2 border-b border-white/10 bg-black/20">
         <div className="flex items-center gap-1.5">
           <Folder className="w-3.5 h-3.5 text-yellow-400" />
-          <span className="text-[11px] font-mono text-white/70 font-semibold">Files</span>
+          <span className="text-[11px] font-mono text-white/70 font-semibold">
+            Files
+          </span>
         </div>
         <div className="flex items-center gap-0.5">
           <Button
@@ -138,7 +159,9 @@ export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }:
 
       {/* Path breadcrumb */}
       <div className="px-2 py-1 border-b border-white/5 bg-black/10">
-        <span className="text-[10px] font-mono text-white/30 truncate block">{currentPath}</span>
+        <span className="text-[10px] font-mono text-white/30 truncate block">
+          {currentPath}
+        </span>
       </div>
 
       {/* Content */}
@@ -146,7 +169,9 @@ export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }:
         {!bridgeConnected ? (
           <div className="text-center py-8 px-3">
             <Folder className="w-8 h-8 mx-auto mb-2 text-white/10" />
-            <p className="text-[10px] font-mono text-white/25">Bridge not connected</p>
+            <p className="text-[10px] font-mono text-white/25">
+              Bridge not connected
+            </p>
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -154,8 +179,11 @@ export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }:
           </div>
         ) : error ? (
           <div className="text-center py-8 px-3">
-            <p className="text-[10px] font-mono text-red-400/60">Failed to load directory</p>
+            <p className="text-[10px] font-mono text-red-400/60">
+              Failed to load directory
+            </p>
             <button
+              type="button"
               onClick={() => refresh()}
               className="mt-2 text-[10px] font-mono text-neon-green/60 hover:text-neon-green"
             >
@@ -164,7 +192,9 @@ export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }:
           </div>
         ) : entries.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-[10px] font-mono text-white/25">Empty directory</p>
+            <p className="text-[10px] font-mono text-white/25">
+              Empty directory
+            </p>
           </div>
         ) : (
           entries.map((entry) => (
@@ -174,7 +204,7 @@ export function FileBrowserPanel({ bridgeConnected, onClose, onOpenInTerminal }:
               isExpanded={expandedPaths.has(entry.path)}
               onToggle={() => {
                 toggleExpand(entry.path);
-                if (entry.type === 'directory') navigate(entry.path);
+                if (entry.type === "directory") navigate(entry.path);
               }}
               onCopy={() => copyPath(entry.path)}
               onOpenInTerminal={() => onOpenInTerminal(entry.path)}

@@ -1,15 +1,15 @@
-import React from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Shield, LogIn } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { LogIn, Shield } from "lucide-react";
+import type React from "react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -18,7 +18,12 @@ interface AuthGuardProps {
   onDialogClose?: () => void;
 }
 
-export function AuthGuard({ children, fallback, showDialog = false, onDialogClose }: AuthGuardProps) {
+export function AuthGuard({
+  children,
+  fallback,
+  showDialog: _showDialog = false,
+  onDialogClose: _onDialogClose,
+}: AuthGuardProps) {
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity;
 
@@ -33,10 +38,14 @@ interface AuthPromptDialogProps {
   actionDescription?: string;
 }
 
-export function AuthPromptDialog({ open, onClose, actionDescription }: AuthPromptDialogProps) {
+export function AuthPromptDialog({
+  open,
+  onClose,
+  actionDescription,
+}: AuthPromptDialogProps) {
   const { login, loginStatus } = useInternetIdentity();
   const queryClient = useQueryClient();
-  const isLoggingIn = loginStatus === 'logging-in';
+  const isLoggingIn = loginStatus === "logging-in";
 
   const handleLogin = async () => {
     try {
@@ -45,7 +54,7 @@ export function AuthPromptDialog({ open, onClose, actionDescription }: AuthPromp
       onClose();
     } catch (err: unknown) {
       const error = err as Error;
-      if (error?.message === 'User is already authenticated') {
+      if (error?.message === "User is already authenticated") {
         onClose();
       }
     }
@@ -64,12 +73,16 @@ export function AuthPromptDialog({ open, onClose, actionDescription }: AuthPromp
           <DialogDescription>
             {actionDescription
               ? `You need to be logged in to ${actionDescription}.`
-              : 'You need to be logged in to use this feature.'}
-            {' '}Login securely with Internet Identity.
+              : "You need to be logged in to use this feature."}{" "}
+            Login securely with Internet Identity.
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-3 mt-4">
-          <Button onClick={handleLogin} disabled={isLoggingIn} className="flex-1">
+          <Button
+            onClick={handleLogin}
+            disabled={isLoggingIn}
+            className="flex-1"
+          >
             {isLoggingIn ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -82,7 +95,9 @@ export function AuthPromptDialog({ open, onClose, actionDescription }: AuthPromp
               </span>
             )}
           </Button>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

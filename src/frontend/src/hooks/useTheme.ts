@@ -1,19 +1,19 @@
-import { useEffect, useCallback } from 'react';
-import { useGetUserSettings, useSaveUserSettings } from './useQueries';
-import type { UserSettings } from '../types/app';
+import { useCallback, useEffect } from "react";
+import type { UserSettings } from "../types/app";
+import { useGetUserSettings, useSaveUserSettings } from "./useQueries";
 
-type ThemeValue = 'light' | 'dark' | 'system';
+type ThemeValue = "light" | "dark" | "system";
 
 const DEFAULT_SETTINGS: UserSettings = {
-  displayName: '',
-  avatarUrl: '',
-  defaultSearchSort: 'stars',
-  defaultLanguageFilter: '',
+  displayName: "",
+  avatarUrl: "",
+  defaultSearchSort: "stars",
+  defaultLanguageFilter: "",
   resultsPerPage: BigInt(10),
   notificationsEnabled: false,
   savedSearchAlertsEnabled: false,
-  theme: 'system',
-  profileVisibility: 'private',
+  theme: "system",
+  profileVisibility: "private",
   showActivityStats: true,
   compactView: false,
   showStarCount: true,
@@ -21,17 +21,19 @@ const DEFAULT_SETTINGS: UserSettings = {
 
 function applyThemeToDOM(theme: ThemeValue) {
   const root = document.documentElement;
-  if (theme === 'dark') {
-    root.classList.add('dark');
-  } else if (theme === 'light') {
-    root.classList.remove('dark');
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else if (theme === "light") {
+    root.classList.remove("dark");
   } else {
     // system
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
     if (prefersDark) {
-      root.classList.add('dark');
+      root.classList.add("dark");
     } else {
-      root.classList.remove('dark');
+      root.classList.remove("dark");
     }
   }
 }
@@ -40,7 +42,7 @@ export function useTheme() {
   const { data: settings } = useGetUserSettings();
   const saveSettings = useSaveUserSettings();
 
-  const theme = (settings?.theme as ThemeValue) || 'system';
+  const theme = (settings?.theme as ThemeValue) || "system";
 
   // Apply theme whenever settings change
   useEffect(() => {
@@ -49,11 +51,11 @@ export function useTheme() {
 
   // Listen for system preference changes when theme is 'system'
   useEffect(() => {
-    if (theme !== 'system') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => applyThemeToDOM('system');
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    if (theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => applyThemeToDOM("system");
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
   const setTheme = useCallback(
@@ -66,14 +68,14 @@ export function useTheme() {
       };
       saveSettings.mutate(merged);
     },
-    [settings, saveSettings]
+    [settings, saveSettings],
   );
 
-  const resolvedTheme: 'light' | 'dark' =
-    theme === 'system'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
+  const resolvedTheme: "light" | "dark" =
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
       : theme;
 
   return { theme, setTheme, resolvedTheme };

@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 
-type TimeRange = 'day' | 'week' | 'month';
+type TimeRange = "day" | "week" | "month";
 
 interface TimeRangeSelectorProps {
   value: TimeRange;
@@ -8,9 +8,9 @@ interface TimeRangeSelectorProps {
 }
 
 const OPTIONS: { value: TimeRange; label: string }[] = [
-  { value: 'day', label: 'Today' },
-  { value: 'week', label: 'This Week' },
-  { value: 'month', label: 'This Month' },
+  { value: "day", label: "Today" },
+  { value: "week", label: "This Week" },
+  { value: "month", label: "This Month" },
 ];
 
 export function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
@@ -18,12 +18,13 @@ export function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
     <div className="flex items-center rounded-lg border border-border overflow-hidden">
       {OPTIONS.map((opt) => (
         <button
+          type="button"
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={`px-3 py-1.5 text-xs font-mono transition-colors ${
             value === opt.value
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           }`}
         >
           {opt.label}

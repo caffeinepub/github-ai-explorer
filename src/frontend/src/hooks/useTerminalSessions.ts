@@ -1,9 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
-import { useActor } from './useActor';
-import { useInternetIdentity } from './useInternetIdentity';
-import type { TerminalSession } from '../backend';
-import { toast } from 'sonner';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+import type { TerminalSession } from "../backend";
+import { useActor } from "./useActor";
+import { useInternetIdentity } from "./useInternetIdentity";
 
 // ── Query: load all sessions for the authenticated caller ──────────────────
 export function useLoadTerminalSessions() {
@@ -11,7 +11,7 @@ export function useLoadTerminalSessions() {
   const { identity } = useInternetIdentity();
 
   return useQuery<TerminalSession[]>({
-    queryKey: ['terminalSessions'],
+    queryKey: ["terminalSessions"],
     queryFn: async () => {
       if (!actor || !identity) return [];
       return actor.loadTerminalSessions();
@@ -27,14 +27,14 @@ export function useSaveTerminalSession() {
 
   return useMutation({
     mutationFn: async (session: TerminalSession) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.saveTerminalSession(session);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['terminalSessions'] });
+      queryClient.invalidateQueries({ queryKey: ["terminalSessions"] });
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Failed to save session';
+      const msg = err instanceof Error ? err.message : "Failed to save session";
       toast.error(msg);
     },
   });
@@ -47,15 +47,15 @@ export function useSaveTerminalSessionWithToast() {
 
   return useMutation({
     mutationFn: async (session: TerminalSession) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.saveTerminalSession(session);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['terminalSessions'] });
-      toast.success('Session saved successfully');
+      queryClient.invalidateQueries({ queryKey: ["terminalSessions"] });
+      toast.success("Session saved successfully");
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Failed to save session';
+      const msg = err instanceof Error ? err.message : "Failed to save session";
       toast.error(msg);
     },
   });
@@ -68,15 +68,16 @@ export function useDeleteTerminalSession() {
 
   return useMutation({
     mutationFn: async (sessionId: string) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.deleteTerminalSession(sessionId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['terminalSessions'] });
-      toast.success('Session deleted');
+      queryClient.invalidateQueries({ queryKey: ["terminalSessions"] });
+      toast.success("Session deleted");
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Failed to delete session';
+      const msg =
+        err instanceof Error ? err.message : "Failed to delete session";
       toast.error(msg);
     },
   });
@@ -84,7 +85,7 @@ export function useDeleteTerminalSession() {
 
 // ── Hook: auto-restore sessions once after login ───────────────────────────
 export function useAutoRestoreSessions(
-  onRestore: (sessions: TerminalSession[]) => void
+  onRestore: (sessions: TerminalSession[]) => void,
 ) {
   const { data: sessions, isFetched } = useLoadTerminalSessions();
   const { identity } = useInternetIdentity();

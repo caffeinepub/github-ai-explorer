@@ -1,24 +1,28 @@
-import React, { useState } from 'react';
-import { User, Terminal } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { useSaveCallerUserProfile } from '../hooks/useQueries';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Terminal, User } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { useSaveCallerUserProfile } from "../hooks/useQueries";
 
 interface ProfileSetupModalProps {
   open: boolean;
   onComplete: () => void;
 }
 
-export default function ProfileSetupModal({ open, onComplete }: ProfileSetupModalProps) {
-  const [name, setName] = useState('');
+export default function ProfileSetupModal({
+  open,
+  onComplete,
+}: ProfileSetupModalProps) {
+  const [name, setName] = useState("");
   const saveMutation = useSaveCallerUserProfile();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,11 +34,16 @@ export default function ProfileSetupModal({ open, onComplete }: ProfileSetupModa
 
   return (
     <Dialog open={open}>
-      <DialogContent className="bg-card border-border max-w-sm" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent
+        className="bg-card border-border max-w-sm"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <Terminal className="w-5 h-5 text-primary" />
-            <DialogTitle className="font-mono text-foreground">Initialize Profile</DialogTitle>
+            <DialogTitle className="font-mono text-foreground">
+              Initialize Profile
+            </DialogTitle>
           </div>
           <DialogDescription className="text-muted-foreground text-sm">
             Welcome to RepoRadar. Enter your name to get started.
@@ -42,7 +51,10 @@ export default function ProfileSetupModal({ open, onComplete }: ProfileSetupModa
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+            <Label
+              htmlFor="name"
+              className="text-xs font-mono text-muted-foreground uppercase tracking-wider"
+            >
               Display Name
             </Label>
             <div className="relative">
@@ -70,7 +82,7 @@ export default function ProfileSetupModal({ open, onComplete }: ProfileSetupModa
                 Saving...
               </span>
             ) : (
-              '> Initialize'
+              "> Initialize"
             )}
           </Button>
         </form>

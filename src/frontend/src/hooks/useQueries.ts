@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { UserProfile } from '../backend';
-import type { BookmarkEntry, UserSettings } from '../types/app';
-import { toast } from 'sonner';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { UserProfile } from "../backend";
+import type { BookmarkEntry, UserSettings } from "../types/app";
+import { useActor } from "./useActor";
 
 // ── User Profile ──────────────────────────────────────────────────────────
 
@@ -10,9 +10,9 @@ export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
   const query = useQuery<UserProfile | null>({
-    queryKey: ['currentUserProfile'],
+    queryKey: ["currentUserProfile"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getCallerUserProfile();
     },
     enabled: !!actor && !actorFetching,
@@ -32,18 +32,18 @@ export function useSaveCallerUserProfile() {
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
 // ── User Settings (client-side only — backend does not support this) ──────
 
-const SETTINGS_STORAGE_KEY = 'user-settings';
+const SETTINGS_STORAGE_KEY = "user-settings";
 
 function loadSettingsFromStorage(): UserSettings | null {
   try {
@@ -62,7 +62,10 @@ function saveSettingsToStorage(settings: UserSettings) {
     // Store resultsPerPage as number since JSON doesn't support bigint
     localStorage.setItem(
       SETTINGS_STORAGE_KEY,
-      JSON.stringify({ ...settings, resultsPerPage: Number(settings.resultsPerPage) })
+      JSON.stringify({
+        ...settings,
+        resultsPerPage: Number(settings.resultsPerPage),
+      }),
     );
   } catch {
     // ignore
@@ -71,9 +74,9 @@ function saveSettingsToStorage(settings: UserSettings) {
 
 export function useGetUserSettings() {
   const query = useQuery<UserSettings | null>({
-    queryKey: ['userSettings'],
+    queryKey: ["userSettings"],
     queryFn: async () => loadSettingsFromStorage(),
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   return {
@@ -91,18 +94,18 @@ export function useSaveUserSettings() {
       saveSettingsToStorage(settings);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userSettings'] });
-      toast.success('Settings saved successfully');
+      queryClient.invalidateQueries({ queryKey: ["userSettings"] });
+      toast.success("Settings saved successfully");
     },
     onError: () => {
-      toast.error('Failed to save settings');
+      toast.error("Failed to save settings");
     },
   });
 }
 
 // ── Bookmarks (client-side only — backend does not support this) ──────────
 
-const BOOKMARKS_STORAGE_KEY = 'user-bookmarks';
+const BOOKMARKS_STORAGE_KEY = "user-bookmarks";
 
 function loadBookmarksFromStorage(): BookmarkEntry[] {
   try {
@@ -124,9 +127,9 @@ function saveBookmarksToStorage(bookmarks: BookmarkEntry[]) {
 
 export function useGetBookmarks() {
   return useQuery<BookmarkEntry[]>({
-    queryKey: ['bookmarks'],
+    queryKey: ["bookmarks"],
     queryFn: async () => loadBookmarksFromStorage(),
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
@@ -142,7 +145,7 @@ export function useAddBookmark() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
   });
 }
@@ -156,7 +159,7 @@ export function useRemoveBookmark() {
       saveBookmarksToStorage(current.filter((b) => b.repoId !== repoId));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
   });
 }
@@ -165,14 +168,17 @@ export function useUpdateBookmarkTags() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ repoId, tags }: { repoId: string; tags: string[] }) => {
+    mutationFn: async ({
+      repoId,
+      tags,
+    }: { repoId: string; tags: string[] }) => {
       const current = loadBookmarksFromStorage();
       saveBookmarksToStorage(
-        current.map((b) => (b.repoId === repoId ? { ...b, tags } : b))
+        current.map((b) => (b.repoId === repoId ? { ...b, tags } : b)),
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
   });
 }
@@ -181,27 +187,30 @@ export function useUpdateBookmarkNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ repoId, note }: { repoId: string; note: string | null }) => {
+    mutationFn: async ({
+      repoId,
+      note,
+    }: { repoId: string; note: string | null }) => {
       const current = loadBookmarksFromStorage();
       saveBookmarksToStorage(
-        current.map((b) => (b.repoId === repoId ? { ...b, note } : b))
+        current.map((b) => (b.repoId === repoId ? { ...b, note } : b)),
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
   });
 }
 
 // ── GitHub Token (client-side only — backend does not support this) ───────
 
-const GITHUB_TOKEN_STORAGE_KEY = 'github-token';
+const GITHUB_TOKEN_STORAGE_KEY = "github-token";
 
 export function useGetMyGithubToken() {
   return useQuery<string | null>({
-    queryKey: ['githubToken'],
+    queryKey: ["githubToken"],
     queryFn: async () => localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY),
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
 }
@@ -214,7 +223,7 @@ export function useSetMyGithubToken() {
       localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['githubToken'] });
+      queryClient.invalidateQueries({ queryKey: ["githubToken"] });
     },
   });
 }
@@ -227,7 +236,7 @@ export function useRemoveMyGithubToken() {
       localStorage.removeItem(GITHUB_TOKEN_STORAGE_KEY);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['githubToken'] });
+      queryClient.invalidateQueries({ queryKey: ["githubToken"] });
     },
   });
 }

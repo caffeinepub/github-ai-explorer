@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
-import { Bookmark, BookmarkCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useBookmarks } from '../hooks/useBookmarks';
-import { AuthPromptDialog } from './AuthGuard';
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Bookmark, BookmarkCheck } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { useBookmarks } from "../hooks/useBookmarks";
+import { AuthPromptDialog } from "./AuthGuard";
 
 interface BookmarkButtonProps {
   repoId: string;
-  size?: 'sm' | 'default' | 'icon';
+  size?: "sm" | "default" | "icon";
 }
 
-export function BookmarkButton({ repoId, size = 'icon' }: BookmarkButtonProps) {
-  const { isAuthenticated, isBookmarked, toggleBookmark, isToggling } = useBookmarks();
+export function BookmarkButton({ repoId, size = "icon" }: BookmarkButtonProps) {
+  const { isAuthenticated, isBookmarked, toggleBookmark, isToggling } =
+    useBookmarks();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const bookmarked = isBookmarked(repoId);
 
@@ -34,7 +40,11 @@ export function BookmarkButton({ repoId, size = 'icon' }: BookmarkButtonProps) {
             size={size}
             onClick={handleClick}
             disabled={isToggling}
-            className={bookmarked ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
+            className={
+              bookmarked
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary"
+            }
           >
             {isToggling ? (
               <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -46,7 +56,11 @@ export function BookmarkButton({ repoId, size = 'icon' }: BookmarkButtonProps) {
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          {!isAuthenticated ? 'Login to bookmark' : bookmarked ? 'Remove bookmark' : 'Bookmark repo'}
+          {!isAuthenticated
+            ? "Login to bookmark"
+            : bookmarked
+              ? "Remove bookmark"
+              : "Bookmark repo"}
         </TooltipContent>
       </Tooltip>
 

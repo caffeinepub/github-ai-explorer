@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Bug, Search, AlertCircle, ChevronLeft, ChevronRight, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Bug,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  User,
+} from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
 
 interface GitHubLabel {
   id: number;
@@ -26,23 +34,26 @@ interface GitHubIssue {
 }
 
 function getGitHubToken(): string | null {
-  return localStorage.getItem("github_pat") || localStorage.getItem("github-token");
+  return (
+    localStorage.getItem("github_pat") || localStorage.getItem("github-token")
+  );
 }
 
 async function fetchIssues(
   owner: string,
   repo: string,
   state: "open" | "closed",
-  page: number
+  page: number,
 ): Promise<{ issues: GitHubIssue[]; hasMore: boolean }> {
   const token = getGitHubToken();
   const headers: HeadersInit = { Accept: "application/vnd.github.v3+json" };
-  if (token) headers["Authorization"] = `token ${token}`;
+  if (token) headers.Authorization = `token ${token}`;
 
   const url = `https://api.github.com/repos/${owner}/${repo}/issues?state=${state}&per_page=30&page=${page}`;
   const res = await fetch(url, { headers });
   if (res.status === 404) throw new Error("Repository not found.");
-  if (res.status === 403) throw new Error("API rate limit exceeded. Add a GitHub PAT in Settings.");
+  if (res.status === 403)
+    throw new Error("API rate limit exceeded. Add a GitHub PAT in Settings.");
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
 
   const issues: GitHubIssue[] = await res.json();
@@ -62,7 +73,11 @@ function formatRelativeDate(dateStr: string): string {
   return `${years} year${years !== 1 ? "s" : ""} ago`;
 }
 
-function getLabelStyle(hexColor: string): { backgroundColor: string; color: string; borderColor: string } {
+function getLabelStyle(hexColor: string): {
+  backgroundColor: string;
+  color: string;
+  borderColor: string;
+} {
   const clean = hexColor.replace("#", "");
   return {
     backgroundColor: `#${clean}33`,
@@ -97,7 +112,9 @@ function IssueCard({ issue }: IssueCardProps) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2 flex-wrap">
-            <span className="font-mono text-xs text-muted-foreground shrink-0">#{issue.number}</span>
+            <span className="font-mono text-xs text-muted-foreground shrink-0">
+              #{issue.number}
+            </span>
             <h3 className="font-mono text-sm text-foreground group-hover:text-primary transition-colors leading-snug break-words">
               {issue.title}
             </h3>
@@ -173,7 +190,7 @@ export default function IssueTrackerPage() {
         setIsLoading(false);
       }
     },
-    [owner, name]
+    [owner, name],
   );
 
   useEffect(() => {
@@ -201,7 +218,7 @@ export default function IssueTrackerPage() {
   const filtered = issues.filter(
     (issue) =>
       searchQuery.trim() === "" ||
-      issue.title.toLowerCase().includes(searchQuery.toLowerCase())
+      issue.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const repoPath = `/repo/${owner}/${name}`;
@@ -271,7 +288,10 @@ export default function IssueTrackerPage() {
       {isLoading ? (
         <div className="space-y-3">
           {["s0", "s1", "s2", "s3", "s4", "s5"].map((key) => (
-            <div key={key} className="bg-card border border-border rounded-xl p-4 animate-pulse">
+            <div
+              key={key}
+              className="bg-card border border-border rounded-xl p-4 animate-pulse"
+            >
               <div className="flex items-start gap-3">
                 <div className="w-16 h-5 bg-secondary rounded-full shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -305,14 +325,15 @@ export default function IssueTrackerPage() {
         <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center gap-3 text-center">
           <Bug className="w-8 h-8 text-muted-foreground/40" />
           <p className="font-mono text-sm text-muted-foreground">
-            {searchQuery ? "No issues match your filter." : `No ${stateFilter} issues found.`}
+            {searchQuery
+              ? "No issues match your filter."
+              : `No ${stateFilter} issues found.`}
           </p>
         </div>
       ) : (
         <>
           <div className="text-xs font-mono text-muted-foreground mb-4">
-            Showing{" "}
-            <span className="text-primary">{filtered.length}</span>{" "}
+            Showing <span className="text-primary">{filtered.length}</span>{" "}
             {stateFilter} issue{filtered.length !== 1 ? "s" : ""}
             {searchQuery && ` matching "${searchQuery}"`}
             {` · page ${page}`}
@@ -336,7 +357,9 @@ export default function IssueTrackerPage() {
                 <ChevronLeft className="w-4 h-4" />
                 Prev
               </Button>
-              <span className="font-mono text-xs text-muted-foreground">Page {page}</span>
+              <span className="font-mono text-xs text-muted-foreground">
+                Page {page}
+              </span>
               <Button
                 variant="outline"
                 size="sm"

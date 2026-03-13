@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Bookmark, LogIn, Trash2 } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
-import { BookmarkCard } from '../components/BookmarkCard';
-import EmptyState from '../components/EmptyState';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { TagFilter } from '../components/TagFilter';
-import { useBookmarks } from '../hooks/useBookmarks';
-import { useRemoveBookmark } from '../hooks/useQueries';
-import { getRepositoryByFullName } from '../services/githubApi';
-import type { Repository } from '../types/github';
-import type { BookmarkEntry } from '../types/app';
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "@tanstack/react-router";
+import { Bookmark, LogIn, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { BookmarkCard } from "../components/BookmarkCard";
+import EmptyState from "../components/EmptyState";
+import { TagFilter } from "../components/TagFilter";
+import { useBookmarks } from "../hooks/useBookmarks";
+import { useRemoveBookmark } from "../hooks/useQueries";
+import { getRepositoryByFullName } from "../services/githubApi";
+import type { BookmarkEntry } from "../types/app";
+import type { Repository } from "../types/github";
 
 interface RepoState {
   bookmark: BookmarkEntry;
@@ -39,7 +39,11 @@ function BookmarkCardSkeleton() {
 }
 
 export default function BookmarksPage() {
-  const { bookmarks, isLoading: bookmarksLoading, isAuthenticated } = useBookmarks();
+  const {
+    bookmarks,
+    isLoading: bookmarksLoading,
+    isAuthenticated,
+  } = useBookmarks();
   const removeMutation = useRemoveBookmark();
   const [repoStates, setRepoStates] = useState<RepoState[]>([]);
   const [fetchingRepos, setFetchingRepos] = useState(false);
@@ -55,12 +59,12 @@ export default function BookmarksPage() {
     setFetchingRepos(true);
     const fetchAll = async () => {
       const results = await Promise.allSettled(
-        bookmarks.map((b) => getRepositoryByFullName(b.repoId))
+        bookmarks.map((b) => getRepositoryByFullName(b.repoId)),
       );
       const states: RepoState[] = results.map((result, i) => ({
         bookmark: bookmarks[i],
-        repo: result.status === 'fulfilled' ? result.value : null,
-        error: result.status === 'rejected',
+        repo: result.status === "fulfilled" ? result.value : null,
+        error: result.status === "rejected",
       }));
       setRepoStates(states);
       setFetchingRepos(false);
@@ -72,20 +76,19 @@ export default function BookmarksPage() {
   const isLoading = bookmarksLoading || fetchingRepos;
 
   // Collect all unique tags
-  const allTags = Array.from(
-    new Set(bookmarks.flatMap((b) => b.tags))
-  );
+  const allTags = Array.from(new Set(bookmarks.flatMap((b) => b.tags)));
 
   // Filter by selected tags
-  const filteredStates = selectedTags.length === 0
-    ? repoStates
-    : repoStates.filter(({ bookmark }) =>
-        selectedTags.every((tag) => bookmark.tags.includes(tag))
-      );
+  const filteredStates =
+    selectedTags.length === 0
+      ? repoStates
+      : repoStates.filter(({ bookmark }) =>
+          selectedTags.every((tag) => bookmark.tags.includes(tag)),
+        );
 
   const handleToggleTag = (tag: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -153,6 +156,7 @@ export default function BookmarksPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholder
               <BookmarkCardSkeleton key={i} />
             ))}
           </div>
@@ -173,18 +177,26 @@ export default function BookmarksPage() {
       ) : (
         <div>
           <div className="text-xs font-mono text-muted-foreground mb-4">
-            <span className="text-primary">{filteredStates.length}</span> of{' '}
-            <span className="text-primary">{repoStates.length}</span> bookmarked repositories
+            <span className="text-primary">{filteredStates.length}</span> of{" "}
+            <span className="text-primary">{repoStates.length}</span> bookmarked
+            repositories
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredStates.map(({ bookmark, repo, error }) => {
               if (error || !repo) {
                 return (
-                  <div key={bookmark.repoId} className="bg-card border border-border/50 rounded-xl p-4 flex flex-col gap-3">
+                  <div
+                    key={bookmark.repoId}
+                    className="bg-card border border-border/50 rounded-xl p-4 flex flex-col gap-3"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-mono text-sm text-foreground/70">{bookmark.repoId}</p>
-                        <p className="text-xs text-destructive mt-1">Repository unavailable or deleted</p>
+                        <p className="font-mono text-sm text-foreground/70">
+                          {bookmark.repoId}
+                        </p>
+                        <p className="text-xs text-destructive mt-1">
+                          Repository unavailable or deleted
+                        </p>
                       </div>
                       <Button
                         variant="ghost"
@@ -199,7 +211,13 @@ export default function BookmarksPage() {
                   </div>
                 );
               }
-              return <BookmarkCard key={bookmark.repoId} repo={repo} bookmark={bookmark} />;
+              return (
+                <BookmarkCard
+                  key={bookmark.repoId}
+                  repo={repo}
+                  bookmark={bookmark}
+                />
+              );
             })}
           </div>
         </div>

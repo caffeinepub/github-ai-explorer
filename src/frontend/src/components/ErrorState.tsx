@@ -1,6 +1,6 @@
-import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import React from "react";
 
 interface ErrorStateProps {
   message: string;
@@ -13,8 +13,12 @@ export default function ErrorState({ message, onRetry }: ErrorStateProps) {
       <div className="w-14 h-14 rounded-full bg-destructive/10 border border-destructive/30 flex items-center justify-center mb-4">
         <AlertTriangle className="w-7 h-7 text-destructive" />
       </div>
-      <h3 className="font-mono font-semibold text-foreground mb-2">Something went wrong</h3>
-      <p className="text-sm text-muted-foreground max-w-md mb-6 font-mono">{message}</p>
+      <h3 className="font-mono font-semibold text-foreground mb-2">
+        Something went wrong
+      </h3>
+      <p className="text-sm text-muted-foreground max-w-md mb-6 font-mono">
+        {message}
+      </p>
       {onRetry && (
         <Button
           onClick={onRetry}

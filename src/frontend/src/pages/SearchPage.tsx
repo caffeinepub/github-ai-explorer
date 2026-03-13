@@ -1,17 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { Search, Telescope } from 'lucide-react';
-import SearchFilters, { FilterState } from '../components/SearchFilters';
-import { RepositoryCard } from '../components/RepositoryCard';
-import EmptyState from '../components/EmptyState';
-import ErrorState from '../components/ErrorState';
-import { Skeleton } from '@/components/ui/skeleton';
-import { searchRepositories } from '../services/githubApi';
-import type { Repository } from '../types/github';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Telescope } from "lucide-react";
+import React, { useState, useCallback, useRef } from "react";
+import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
+import { RepositoryCard } from "../components/RepositoryCard";
+import SearchFilters, { type FilterState } from "../components/SearchFilters";
+import { searchRepositories } from "../services/githubApi";
+import type { Repository } from "../types/github";
 
 const DEFAULT_FILTERS: FilterState = {
-  query: '',
-  language: '',
-  topic: '',
+  query: "",
+  language: "",
+  topic: "",
   minStars: 0,
 };
 
@@ -62,7 +62,9 @@ export default function SearchPage() {
       setRepos(result.items);
       setTotalCount(result.total_count);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search repositories.');
+      setError(
+        err instanceof Error ? err.message : "Failed to search repositories.",
+      );
       setRepos([]);
     } finally {
       setIsLoading(false);
@@ -112,6 +114,7 @@ export default function SearchPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholder
               <CardSkeleton key={i} />
             ))}
           </div>
@@ -125,8 +128,14 @@ export default function SearchPage() {
           description="Enter a search query or apply filters to discover interesting GitHub repositories."
           action={
             <button
+              type="button"
               onClick={() => {
-                const newFilters = { query: 'awesome', language: '', topic: '', minStars: 1000 };
+                const newFilters = {
+                  query: "awesome",
+                  language: "",
+                  topic: "",
+                  minStars: 1000,
+                };
                 setFilters(newFilters);
                 setTimeout(() => doSearch(newFilters), 0);
               }}
@@ -145,7 +154,8 @@ export default function SearchPage() {
       ) : (
         <div>
           <div className="text-xs font-mono text-muted-foreground mb-4">
-            <span className="text-primary">{totalCount.toLocaleString()}</span> repositories found
+            <span className="text-primary">{totalCount.toLocaleString()}</span>{" "}
+            repositories found
             {repos.length < totalCount && ` · showing top ${repos.length}`}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

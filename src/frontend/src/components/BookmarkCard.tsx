@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Star, GitFork, Edit2, Check, X, Tag, FileText } from 'lucide-react';
-import { BookmarkButton } from './BookmarkButton';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import type { Repository } from '../types/github';
-import type { BookmarkEntry } from '../types/app';
-import { useUpdateBookmarkTags, useUpdateBookmarkNote } from '../hooks/useQueries';
-import { toast } from 'sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useNavigate } from "@tanstack/react-router";
+import { Check, Edit2, FileText, GitFork, Star, Tag, X } from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "sonner";
+import {
+  useUpdateBookmarkNote,
+  useUpdateBookmarkTags,
+} from "../hooks/useQueries";
+import type { BookmarkEntry } from "../types/app";
+import type { Repository } from "../types/github";
+import { BookmarkButton } from "./BookmarkButton";
 
 interface BookmarkCardProps {
   repo: Repository;
@@ -17,17 +20,18 @@ interface BookmarkCardProps {
 }
 
 const TAG_COLORS = [
-  'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  'bg-purple-500/15 text-purple-400 border-purple-500/30',
-  'bg-green-500/15 text-green-400 border-green-500/30',
-  'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  'bg-pink-500/15 text-pink-400 border-pink-500/30',
-  'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  "bg-green-500/15 text-green-400 border-green-500/30",
+  "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  "bg-pink-500/15 text-pink-400 border-pink-500/30",
+  "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
 ];
 
 function getTagColor(tag: string): string {
   let hash = 0;
-  for (let i = 0; i < tag.length; i++) hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < tag.length; i++)
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
 }
 
@@ -39,38 +43,41 @@ function formatCount(n: number): string {
 export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [tagInput, setTagInput] = useState(bookmark.tags.join(', '));
-  const [noteInput, setNoteInput] = useState(bookmark.note || '');
+  const [tagInput, setTagInput] = useState(bookmark.tags.join(", "));
+  const [noteInput, setNoteInput] = useState(bookmark.note || "");
 
   const updateTags = useUpdateBookmarkTags();
   const updateNote = useUpdateBookmarkNote();
 
-  const [owner, name] = repo.full_name.split('/');
+  const [owner, name] = repo.full_name.split("/");
 
   const handleTitleClick = () => {
-    navigate({ to: '/repo/$owner/$name', params: { owner, name } });
+    navigate({ to: "/repo/$owner/$name", params: { owner, name } });
   };
 
   const handleSave = async () => {
     const newTags = tagInput
-      .split(',')
+      .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
     try {
       await Promise.all([
         updateTags.mutateAsync({ repoId: bookmark.repoId, tags: newTags }),
-        updateNote.mutateAsync({ repoId: bookmark.repoId, note: noteInput.trim() || null }),
+        updateNote.mutateAsync({
+          repoId: bookmark.repoId,
+          note: noteInput.trim() || null,
+        }),
       ]);
       setIsEditing(false);
-      toast.success('Bookmark updated');
+      toast.success("Bookmark updated");
     } catch {
-      toast.error('Failed to update bookmark');
+      toast.error("Failed to update bookmark");
     }
   };
 
   const handleCancel = () => {
-    setTagInput(bookmark.tags.join(', '));
-    setNoteInput(bookmark.note || '');
+    setTagInput(bookmark.tags.join(", "));
+    setNoteInput(bookmark.note || "");
     setIsEditing(false);
   };
 
@@ -83,12 +90,15 @@ export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <button
+              type="button"
               onClick={handleTitleClick}
               className="font-mono font-semibold text-sm text-primary hover:underline truncate block text-left w-full"
             >
               {repo.full_name}
             </button>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">by {repo.owner.login}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+              by {repo.owner.login}
+            </p>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -105,7 +115,9 @@ export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
 
         {/* Description */}
         {repo.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{repo.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {repo.description}
+          </p>
         )}
 
         {/* Tags display */}
@@ -135,8 +147,14 @@ export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
         {isEditing && (
           <div className="space-y-2 pt-1">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Tags (comma-separated)</label>
+              <label
+                htmlFor="bookmark-tags"
+                className="text-xs text-muted-foreground mb-1 block"
+              >
+                Tags (comma-separated)
+              </label>
               <Input
+                id="bookmark-tags"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 placeholder="react, typescript, frontend"
@@ -144,8 +162,14 @@ export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Note</label>
+              <label
+                htmlFor="bookmark-note"
+                className="text-xs text-muted-foreground mb-1 block"
+              >
+                Note
+              </label>
               <Textarea
+                id="bookmark-note"
                 value={noteInput}
                 onChange={(e) => setNoteInput(e.target.value)}
                 placeholder="Add a note about this repo..."
@@ -153,7 +177,12 @@ export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
               />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleSave} disabled={isSaving} className="h-7 text-xs gap-1">
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="h-7 text-xs gap-1"
+              >
                 {isSaving ? (
                   <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -161,7 +190,12 @@ export function BookmarkCard({ repo, bookmark }: BookmarkCardProps) {
                 )}
                 Save
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleCancel} className="h-7 text-xs gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancel}
+                className="h-7 text-xs gap-1"
+              >
                 <X className="w-3 h-3" />
                 Cancel
               </Button>

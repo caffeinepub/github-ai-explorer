@@ -1,5 +1,9 @@
-import { useInternetIdentity } from './useInternetIdentity';
-import { useGetBookmarks, useAddBookmark, useRemoveBookmark } from './useQueries';
+import { useInternetIdentity } from "./useInternetIdentity";
+import {
+  useAddBookmark,
+  useGetBookmarks,
+  useRemoveBookmark,
+} from "./useQueries";
 
 export function useBookmarks() {
   const { identity } = useInternetIdentity();
@@ -10,7 +14,7 @@ export function useBookmarks() {
   const removeMutation = useRemoveBookmark();
 
   const isBookmarked = (repoId: string): boolean => {
-    return bookmarks.some(b => b.repoId === repoId);
+    return bookmarks.some((b) => b.repoId === repoId);
   };
 
   const toggleBookmark = async (repoId: string) => {

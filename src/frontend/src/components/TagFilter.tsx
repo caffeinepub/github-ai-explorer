@@ -1,6 +1,6 @@
-import React from 'react';
-import { Tag, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Tag, X } from "lucide-react";
+import React from "react";
 
 interface TagFilterProps {
   allTags: string[];
@@ -10,21 +10,27 @@ interface TagFilterProps {
 }
 
 const TAG_COLORS = [
-  'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25',
-  'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:bg-purple-500/25',
-  'bg-green-500/15 text-green-400 border-green-500/30 hover:bg-green-500/25',
-  'bg-orange-500/15 text-orange-400 border-orange-500/30 hover:bg-orange-500/25',
-  'bg-pink-500/15 text-pink-400 border-pink-500/30 hover:bg-pink-500/25',
-  'bg-cyan-500/15 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/25',
+  "bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25",
+  "bg-purple-500/15 text-purple-400 border-purple-500/30 hover:bg-purple-500/25",
+  "bg-green-500/15 text-green-400 border-green-500/30 hover:bg-green-500/25",
+  "bg-orange-500/15 text-orange-400 border-orange-500/30 hover:bg-orange-500/25",
+  "bg-pink-500/15 text-pink-400 border-pink-500/30 hover:bg-pink-500/25",
+  "bg-cyan-500/15 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/25",
 ];
 
 function getTagColor(tag: string): string {
   let hash = 0;
-  for (let i = 0; i < tag.length; i++) hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < tag.length; i++)
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
 }
 
-export function TagFilter({ allTags, selectedTags, onToggleTag, onClearAll }: TagFilterProps) {
+export function TagFilter({
+  allTags,
+  selectedTags,
+  onToggleTag,
+  onClearAll,
+}: TagFilterProps) {
   if (allTags.length === 0) return null;
 
   return (
@@ -38,10 +44,13 @@ export function TagFilter({ allTags, selectedTags, onToggleTag, onClearAll }: Ta
         const colorClass = getTagColor(tag);
         return (
           <button
+            type="button"
             key={tag}
             onClick={() => onToggleTag(tag)}
             className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${colorClass} ${
-              isSelected ? 'ring-1 ring-current' : 'opacity-70 hover:opacity-100'
+              isSelected
+                ? "ring-1 ring-current"
+                : "opacity-70 hover:opacity-100"
             }`}
           >
             <Tag className="w-2.5 h-2.5" />

@@ -1,27 +1,34 @@
-import React from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import React from "react";
 
 interface DifficultyBadgeProps {
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
   rationale: string;
 }
 
 const DIFFICULTY_CONFIG = {
   Beginner: {
-    className: 'bg-green-500/15 text-green-400 border-green-500/30',
-    dot: 'bg-green-400',
+    className: "bg-green-500/15 text-green-400 border-green-500/30",
+    dot: "bg-green-400",
   },
   Intermediate: {
-    className: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    dot: 'bg-yellow-400',
+    className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+    dot: "bg-yellow-400",
   },
   Advanced: {
-    className: 'bg-red-500/15 text-red-400 border-red-500/30',
-    dot: 'bg-red-400',
+    className: "bg-red-500/15 text-red-400 border-red-500/30",
+    dot: "bg-red-400",
   },
 };
 
-export function DifficultyBadge({ difficulty, rationale }: DifficultyBadgeProps) {
+export function DifficultyBadge({
+  difficulty,
+  rationale,
+}: DifficultyBadgeProps) {
   const config = DIFFICULTY_CONFIG[difficulty];
 
   return (

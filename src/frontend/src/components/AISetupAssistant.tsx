@@ -1,22 +1,25 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CodeBlock } from './CodeBlock';
-import { CommitToForkButton } from './CommitToForkButton';
-import { TechStackBadges } from './TechStackBadges';
-import { AuthPromptDialog } from './AuthGuard';
-import { getRepositoryFileTree, getFileContent } from '../services/githubApi';
-import { analyzeRepo, generateSetupScript } from '../utils/setupScriptGenerator';
-import { generateDockerCompose } from '../utils/dockerComposeGenerator';
-import { generateSetupInstructions } from '../utils/setupInstructionsGenerator';
-import { detectTechStack } from '../utils/techStackDetector';
-import type { Repository, ForkResult } from '../types/github';
-import { Wand2, ChevronDown, ChevronUp, AlertCircle, Key } from 'lucide-react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetMyGithubToken } from '../hooks/useQueries';
-import type { CommitFile } from '../types/github';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, ChevronDown, ChevronUp, Key, Wand2 } from "lucide-react";
+import React, { useState } from "react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useGetMyGithubToken } from "../hooks/useQueries";
+import { getFileContent, getRepositoryFileTree } from "../services/githubApi";
+import type { ForkResult, Repository } from "../types/github";
+import type { CommitFile } from "../types/github";
+import { generateDockerCompose } from "../utils/dockerComposeGenerator";
+import { generateSetupInstructions } from "../utils/setupInstructionsGenerator";
+import {
+  analyzeRepo,
+  generateSetupScript,
+} from "../utils/setupScriptGenerator";
+import { detectTechStack } from "../utils/techStackDetector";
+import { AuthPromptDialog } from "./AuthGuard";
+import { CodeBlock } from "./CodeBlock";
+import { CommitToForkButton } from "./CommitToForkButton";
+import { TechStackBadges } from "./TechStackBadges";
 
 interface AISetupAssistantProps {
   repo: Repository;
@@ -30,22 +33,34 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
   const isAuthenticated = !!identity;
   const { data: token } = useGetMyGithubToken();
 
-  const [owner, repoName] = repo.full_name.split('/');
+  const [owner, repoName] = repo.full_name.split("/");
 
-  const { data: analysisData, isLoading, error } = useQuery({
-    queryKey: ['setup-analysis', repo.full_name],
+  const {
+    data: analysisData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["setup-analysis", repo.full_name],
     queryFn: async () => {
-      const [tree, packageJson, requirements, dockerfile, envExample, readme] = await Promise.all([
-        getRepositoryFileTree(owner, repoName, repo.default_branch, token),
-        getFileContent(owner, repoName, 'package.json', token),
-        getFileContent(owner, repoName, 'requirements.txt', token),
-        getFileContent(owner, repoName, 'Dockerfile', token),
-        getFileContent(owner, repoName, '.env.example', token),
-        getFileContent(owner, repoName, 'README.md', token),
-      ]);
+      const [tree, packageJson, requirements, dockerfile, envExample, readme] =
+        await Promise.all([
+          getRepositoryFileTree(owner, repoName, repo.default_branch, token),
+          getFileContent(owner, repoName, "package.json", token),
+          getFileContent(owner, repoName, "requirements.txt", token),
+          getFileContent(owner, repoName, "Dockerfile", token),
+          getFileContent(owner, repoName, ".env.example", token),
+          getFileContent(owner, repoName, "README.md", token),
+        ]);
 
-      const filePaths = tree.tree.map(f => f.path);
-      const analysis = analyzeRepo(filePaths, packageJson, requirements, dockerfile, envExample, readme);
+      const filePaths = tree.tree.map((f) => f.path);
+      const analysis = analyzeRepo(
+        filePaths,
+        packageJson,
+        requirements,
+        dockerfile,
+        envExample,
+        readme,
+      );
       const techBadges = detectTechStack(repo.language, repo.topics, filePaths);
       const setupScript = generateSetupScript(repo.full_name, analysis);
       const dockerCompose = generateDockerCompose(repo.full_name, analysis);
@@ -65,20 +80,35 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
     setIsOpen(!isOpen);
   };
 
-  const commitFiles: CommitFile[] = analysisData ? [
-    { path: 'setup.sh', content: analysisData.setupScript, message: 'Add AI-generated setup script' },
-    { path: 'SETUP.md', content: analysisData.instructions, message: 'Add AI-generated setup instructions' },
-    ...(analysisData.dockerCompose ? [{
-      path: 'docker-compose.generated.yml',
-      content: analysisData.dockerCompose,
-      message: 'Add AI-generated Docker Compose file',
-    }] : []),
-  ] : [];
+  const commitFiles: CommitFile[] = analysisData
+    ? [
+        {
+          path: "setup.sh",
+          content: analysisData.setupScript,
+          message: "Add AI-generated setup script",
+        },
+        {
+          path: "SETUP.md",
+          content: analysisData.instructions,
+          message: "Add AI-generated setup instructions",
+        },
+        ...(analysisData.dockerCompose
+          ? [
+              {
+                path: "docker-compose.generated.yml",
+                content: analysisData.dockerCompose,
+                message: "Add AI-generated Docker Compose file",
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   return (
     <>
       <div className="border border-border/50 rounded-xl overflow-hidden">
         <button
+          type="button"
           onClick={handleOpen}
           className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
         >
@@ -93,7 +123,11 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
               </p>
             </div>
           </div>
-          {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          {isOpen ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
         </button>
 
         {isOpen && (
@@ -102,7 +136,8 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
               <Alert className="mb-4">
                 <Key className="w-4 h-4" />
                 <AlertDescription className="text-xs">
-                  Add a GitHub token in settings for better rate limits and private repo access.
+                  Add a GitHub token in settings for better rate limits and
+                  private repo access.
                 </AlertDescription>
               </Alert>
             )}
@@ -135,8 +170,11 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
                         Required Environment Variables
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {analysisData.analysis.envVars.map(v => (
-                          <code key={v} className="text-xs px-2 py-0.5 rounded bg-muted font-mono text-muted-foreground">
+                        {analysisData.analysis.envVars.map((v) => (
+                          <code
+                            key={v}
+                            className="text-xs px-2 py-0.5 rounded bg-muted font-mono text-muted-foreground"
+                          >
                             {v}
                           </code>
                         ))}
@@ -148,10 +186,19 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
                 {/* Tabs */}
                 <Tabs defaultValue="script">
                   <TabsList className="w-full">
-                    <TabsTrigger value="script" className="flex-1 text-xs">Setup Script</TabsTrigger>
-                    <TabsTrigger value="instructions" className="flex-1 text-xs">Instructions</TabsTrigger>
+                    <TabsTrigger value="script" className="flex-1 text-xs">
+                      Setup Script
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="instructions"
+                      className="flex-1 text-xs"
+                    >
+                      Instructions
+                    </TabsTrigger>
                     {analysisData.dockerCompose && (
-                      <TabsTrigger value="docker" className="flex-1 text-xs">Docker Compose</TabsTrigger>
+                      <TabsTrigger value="docker" className="flex-1 text-xs">
+                        Docker Compose
+                      </TabsTrigger>
                     )}
                   </TabsList>
 
@@ -186,12 +233,14 @@ export function AISetupAssistant({ repo, forkedRepo }: AISetupAssistantProps) {
                 {forkedRepo && token && (
                   <div className="pt-2 border-t border-border/50">
                     <p className="text-xs text-muted-foreground mb-2">
-                      Commit generated files to your fork:{' '}
-                      <span className="font-mono text-primary">{forkedRepo.full_name}</span>
+                      Commit generated files to your fork:{" "}
+                      <span className="font-mono text-primary">
+                        {forkedRepo.full_name}
+                      </span>
                     </p>
                     <CommitToForkButton
                       forkOwner={forkedRepo.owner.login}
-                      forkRepo={forkedRepo.full_name.split('/')[1]}
+                      forkRepo={forkedRepo.full_name.split("/")[1]}
                       token={token}
                       files={commitFiles}
                     />

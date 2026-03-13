@@ -1,14 +1,14 @@
-import React from 'react';
-import { Search, Filter, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { Filter, Search, X } from "lucide-react";
+import type React from "react";
 
 export interface FilterState {
   query: string;
@@ -25,30 +25,52 @@ interface SearchFiltersProps {
 }
 
 const LANGUAGES = [
-  'TypeScript', 'JavaScript', 'Python', 'Rust', 'Go', 'Java',
-  'C++', 'C', 'Swift', 'Kotlin', 'Ruby', 'PHP', 'Dart',
-  'Scala', 'Elixir', 'Haskell', 'Zig', 'Shell', 'HTML',
+  "TypeScript",
+  "JavaScript",
+  "Python",
+  "Rust",
+  "Go",
+  "Java",
+  "C++",
+  "C",
+  "Swift",
+  "Kotlin",
+  "Ruby",
+  "PHP",
+  "Dart",
+  "Scala",
+  "Elixir",
+  "Haskell",
+  "Zig",
+  "Shell",
+  "HTML",
 ];
 
 const STAR_OPTIONS = [
-  { label: 'Any', value: 0 },
-  { label: '100+', value: 100 },
-  { label: '500+', value: 500 },
-  { label: '1k+', value: 1000 },
-  { label: '5k+', value: 5000 },
-  { label: '10k+', value: 10000 },
-  { label: '50k+', value: 50000 },
+  { label: "Any", value: 0 },
+  { label: "100+", value: 100 },
+  { label: "500+", value: 500 },
+  { label: "1k+", value: 1000 },
+  { label: "5k+", value: 5000 },
+  { label: "10k+", value: 10000 },
+  { label: "50k+", value: 50000 },
 ];
 
-export default function SearchFilters({ filters, onChange, onSearch, isLoading }: SearchFiltersProps) {
-  const hasActiveFilters = filters.language || filters.topic || filters.minStars > 0;
+export default function SearchFilters({
+  filters,
+  onChange,
+  onSearch,
+  isLoading,
+}: SearchFiltersProps) {
+  const hasActiveFilters =
+    filters.language || filters.topic || filters.minStars > 0;
 
   const clearFilters = () => {
-    onChange({ query: filters.query, language: '', topic: '', minStars: 0 });
+    onChange({ query: filters.query, language: "", topic: "", minStars: 0 });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') onSearch();
+    if (e.key === "Enter") onSearch();
   };
 
   return (
@@ -75,14 +97,18 @@ export default function SearchFilters({ filters, onChange, onSearch, isLoading }
 
         {/* Language filter */}
         <Select
-          value={filters.language || 'all'}
-          onValueChange={(val) => onChange({ ...filters, language: val === 'all' ? '' : val })}
+          value={filters.language || "all"}
+          onValueChange={(val) =>
+            onChange({ ...filters, language: val === "all" ? "" : val })
+          }
         >
           <SelectTrigger className="h-8 w-36 text-xs font-mono bg-secondary/50 border-border focus:border-primary">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
-            <SelectItem value="all" className="text-xs font-mono">All Languages</SelectItem>
+            <SelectItem value="all" className="text-xs font-mono">
+              All Languages
+            </SelectItem>
             {LANGUAGES.map((lang) => (
               <SelectItem key={lang} value={lang} className="text-xs font-mono">
                 {lang}
@@ -104,14 +130,20 @@ export default function SearchFilters({ filters, onChange, onSearch, isLoading }
         {/* Min stars filter */}
         <Select
           value={String(filters.minStars)}
-          onValueChange={(val) => onChange({ ...filters, minStars: Number(val) })}
+          onValueChange={(val) =>
+            onChange({ ...filters, minStars: Number(val) })
+          }
         >
           <SelectTrigger className="h-8 w-28 text-xs font-mono bg-secondary/50 border-border focus:border-primary">
             <SelectValue placeholder="Min Stars" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
             {STAR_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={String(opt.value)} className="text-xs font-mono">
+              <SelectItem
+                key={opt.value}
+                value={String(opt.value)}
+                className="text-xs font-mono"
+              >
                 {opt.label}
               </SelectItem>
             ))}
@@ -120,6 +152,7 @@ export default function SearchFilters({ filters, onChange, onSearch, isLoading }
 
         {hasActiveFilters && (
           <button
+            type="button"
             onClick={clearFilters}
             className="flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-destructive transition-colors"
           >
@@ -140,7 +173,7 @@ export default function SearchFilters({ filters, onChange, onSearch, isLoading }
               Searching...
             </span>
           ) : (
-            'Search'
+            "Search"
           )}
         </Button>
       </div>

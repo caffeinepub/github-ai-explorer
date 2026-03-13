@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { checkHealth } from '../services/bridgeApi';
+import { useCallback, useEffect, useState } from "react";
+import { checkHealth } from "../services/bridgeApi";
 
-export type BridgeStatus = 'connecting' | 'connected' | 'disconnected';
+export type BridgeStatus = "connecting" | "connected" | "disconnected";
 
 export function useBridgeStatus() {
-  const [status, setStatus] = useState<BridgeStatus>('connecting');
+  const [status, setStatus] = useState<BridgeStatus>("connecting");
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
   const poll = useCallback(async () => {
     const ok = await checkHealth();
-    setStatus(ok ? 'connected' : 'disconnected');
+    setStatus(ok ? "connected" : "disconnected");
     setLastChecked(new Date());
   }, []);
 

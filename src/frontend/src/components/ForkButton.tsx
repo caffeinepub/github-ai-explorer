@@ -1,25 +1,30 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { GitFork, ExternalLink } from 'lucide-react';
-import { AuthPromptDialog } from './AuthGuard';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetMyGithubToken } from '../hooks/useQueries';
-import { useForkRepo } from '../hooks/useForkRepo';
-import type { ForkResult } from '../types/github';
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
+import { ExternalLink, GitFork } from "lucide-react";
+import React, { useState } from "react";
+import { useForkRepo } from "../hooks/useForkRepo";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useGetMyGithubToken } from "../hooks/useQueries";
+import type { ForkResult } from "../types/github";
+import { AuthPromptDialog } from "./AuthGuard";
 
 interface ForkButtonProps {
   owner: string;
   repo: string;
   onForked?: (result: ForkResult) => void;
-  size?: 'sm' | 'default';
+  size?: "sm" | "default";
 }
 
-export function ForkButton({ owner, repo, onForked, size = 'default' }: ForkButtonProps) {
+export function ForkButton({
+  owner,
+  repo,
+  onForked,
+  size = "default",
+}: ForkButtonProps) {
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity;
   const { data: token } = useGetMyGithubToken();
@@ -38,7 +43,12 @@ export function ForkButton({ owner, repo, onForked, size = 'default' }: ForkButt
 
   if (forkedRepo) {
     return (
-      <Button variant="outline" size={size} asChild className="gap-2 text-green-400 border-green-500/40">
+      <Button
+        variant="outline"
+        size={size}
+        asChild
+        className="gap-2 text-green-400 border-green-500/40"
+      >
         <a href={forkedRepo.html_url} target="_blank" rel="noopener noreferrer">
           <GitFork className="w-4 h-4" />
           View Fork
@@ -53,7 +63,12 @@ export function ForkButton({ owner, repo, onForked, size = 'default' }: ForkButt
       <>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="outline" size={size} onClick={() => setShowAuthDialog(true)} className="gap-2">
+            <Button
+              variant="outline"
+              size={size}
+              onClick={() => setShowAuthDialog(true)}
+              className="gap-2"
+            >
               <GitFork className="w-4 h-4" />
               Fork
             </Button>
@@ -73,7 +88,12 @@ export function ForkButton({ owner, repo, onForked, size = 'default' }: ForkButt
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size={size} disabled className="gap-2 opacity-60">
+          <Button
+            variant="outline"
+            size={size}
+            disabled
+            className="gap-2 opacity-60"
+          >
             <GitFork className="w-4 h-4" />
             Fork
           </Button>
@@ -84,13 +104,19 @@ export function ForkButton({ owner, repo, onForked, size = 'default' }: ForkButt
   }
 
   return (
-    <Button variant="outline" size={size} onClick={handleFork} disabled={isPending} className="gap-2">
+    <Button
+      variant="outline"
+      size={size}
+      onClick={handleFork}
+      disabled={isPending}
+      className="gap-2"
+    >
       {isPending ? (
         <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : (
         <GitFork className="w-4 h-4" />
       )}
-      {isPending ? 'Forking...' : 'Fork'}
+      {isPending ? "Forking..." : "Fork"}
     </Button>
   );
 }

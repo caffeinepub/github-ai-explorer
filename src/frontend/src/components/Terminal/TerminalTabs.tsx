@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Plus, X } from 'lucide-react';
-import type { TerminalTab } from '../../hooks/useTerminalState';
+import { Plus, X } from "lucide-react";
+import React, { useState, useRef } from "react";
+import type { TerminalTab } from "../../hooks/useTerminalState";
 
 interface TerminalTabsProps {
   tabs: TerminalTab[];
@@ -20,7 +20,7 @@ export function TerminalTabs({
   onRename,
 }: TerminalTabsProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editValue, setEditValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const startEdit = (tab: TerminalTab) => {
@@ -41,12 +41,13 @@ export function TerminalTabs({
       {tabs.map((tab, index) => {
         const isActive = index === activeTabIndex;
         return (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: terminal tabs handle keyboard via global shortcut
           <div
             key={tab.id}
             className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-t text-xs font-mono cursor-pointer select-none transition-colors min-w-0 max-w-[160px] shrink-0 ${
               isActive
-                ? 'bg-terminal-surface text-neon-green border-t border-x border-neon-green/30'
-                : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+                ? "bg-terminal-surface text-neon-green border-t border-x border-neon-green/30"
+                : "text-white/50 hover:text-white/80 hover:bg-white/5"
             }`}
             onClick={() => onSwitch(index)}
             onDoubleClick={() => startEdit(tab)}
@@ -61,8 +62,8 @@ export function TerminalTabs({
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={commitEdit}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') commitEdit();
-                  if (e.key === 'Escape') setEditingId(null);
+                  if (e.key === "Enter") commitEdit();
+                  if (e.key === "Escape") setEditingId(null);
                   e.stopPropagation();
                 }}
                 className="bg-transparent outline-none w-full min-w-0 text-neon-green"
@@ -73,6 +74,7 @@ export function TerminalTabs({
             )}
             {tabs.length > 1 && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose(tab.id);
@@ -86,6 +88,7 @@ export function TerminalTabs({
         );
       })}
       <button
+        type="button"
         onClick={onAdd}
         className="flex items-center justify-center w-7 h-7 rounded text-white/40 hover:text-neon-green hover:bg-white/5 transition-colors shrink-0 ml-1"
         title="New tab"

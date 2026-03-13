@@ -1,10 +1,10 @@
-import React from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Star, GitFork, Eye } from 'lucide-react';
-import { BookmarkButton } from './BookmarkButton';
-import { AIAnalysisPanel } from './AIAnalysisPanel';
-import type { Repository } from '../types/github';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useNavigate } from "@tanstack/react-router";
+import { Eye, GitFork, Star } from "lucide-react";
+import React from "react";
+import type { Repository } from "../types/github";
+import { AIAnalysisPanel } from "./AIAnalysisPanel";
+import { BookmarkButton } from "./BookmarkButton";
 
 interface RepositoryCardProps {
   repo: Repository;
@@ -12,26 +12,26 @@ interface RepositoryCardProps {
 }
 
 const LANGUAGE_COLORS: Record<string, string> = {
-  JavaScript: '#f7df1e',
-  TypeScript: '#3178c6',
-  Python: '#3776ab',
-  Rust: '#ce422b',
-  Go: '#00add8',
-  Java: '#ed8b00',
-  'C++': '#00599c',
-  C: '#555555',
-  'C#': '#239120',
-  Ruby: '#cc342d',
-  PHP: '#777bb4',
-  Swift: '#fa7343',
-  Kotlin: '#7f52ff',
-  Dart: '#0175c2',
-  Shell: '#89e051',
-  HTML: '#e34c26',
-  CSS: '#563d7c',
-  Vue: '#42b883',
-  Scala: '#dc322f',
-  Elixir: '#6e4a7e',
+  JavaScript: "#f7df1e",
+  TypeScript: "#3178c6",
+  Python: "#3776ab",
+  Rust: "#ce422b",
+  Go: "#00add8",
+  Java: "#ed8b00",
+  "C++": "#00599c",
+  C: "#555555",
+  "C#": "#239120",
+  Ruby: "#cc342d",
+  PHP: "#777bb4",
+  Swift: "#fa7343",
+  Kotlin: "#7f52ff",
+  Dart: "#0175c2",
+  Shell: "#89e051",
+  HTML: "#e34c26",
+  CSS: "#563d7c",
+  Vue: "#42b883",
+  Scala: "#dc322f",
+  Elixir: "#6e4a7e",
 };
 
 function formatCount(n: number): string {
@@ -41,11 +41,13 @@ function formatCount(n: number): string {
 
 export function RepositoryCard({ repo, rank }: RepositoryCardProps) {
   const navigate = useNavigate();
-  const [owner, name] = repo.full_name.split('/');
-  const langColor = repo.language ? (LANGUAGE_COLORS[repo.language] || '#6b7280') : null;
+  const [owner, name] = repo.full_name.split("/");
+  const langColor = repo.language
+    ? LANGUAGE_COLORS[repo.language] || "#6b7280"
+    : null;
 
   const handleCardClick = () => {
-    navigate({ to: '/repo/$owner/$name', params: { owner, name } });
+    navigate({ to: "/repo/$owner/$name", params: { owner, name } });
   };
 
   return (
@@ -61,6 +63,7 @@ export function RepositoryCard({ repo, rank }: RepositoryCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <button
+              type="button"
               onClick={handleCardClick}
               className="font-mono font-semibold text-sm text-primary hover:underline truncate block text-left w-full"
             >
@@ -103,7 +106,10 @@ export function RepositoryCard({ repo, rank }: RepositoryCardProps) {
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {langColor && (
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: langColor }} />
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: langColor }}
+              />
               {repo.language}
             </span>
           )}

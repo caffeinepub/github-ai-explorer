@@ -1,40 +1,40 @@
-import React, { useState } from 'react';
-import { Link, Outlet, useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
-import { useGetCallerUserProfile } from '../hooks/useQueries';
-import { useTheme } from '../hooks/useTheme';
-import { GithubTokenSettings } from './GithubTokenSettings';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
-  Telescope,
-  Search,
-  TrendingUp,
   Bookmark,
+  Heart,
+  Key,
   LogIn,
   LogOut,
-  User,
-  Key,
-  Heart,
+  Monitor,
+  Moon,
+  Search,
   Settings,
   Sun,
-  Moon,
-  Monitor,
-} from 'lucide-react';
+  Telescope,
+  TrendingUp,
+  User,
+} from "lucide-react";
+import React, { useState } from "react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useGetCallerUserProfile } from "../hooks/useQueries";
+import { useTheme } from "../hooks/useTheme";
+import { GithubTokenSettings } from "./GithubTokenSettings";
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((w) => w[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -44,7 +44,7 @@ export default function Layout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === 'logging-in';
+  const isLoggingIn = loginStatus === "logging-in";
   const { data: userProfile } = useGetCallerUserProfile();
   const [tokenSettingsOpen, setTokenSettingsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -54,7 +54,7 @@ export default function Layout() {
       await login();
     } catch (err: unknown) {
       const error = err as Error;
-      if (error?.message === 'User is already authenticated') {
+      if (error?.message === "User is already authenticated") {
         await clear();
         setTimeout(() => login(), 300);
       }
@@ -64,21 +64,26 @@ export default function Layout() {
   const handleLogout = async () => {
     await clear();
     queryClient.clear();
-    navigate({ to: '/' });
+    navigate({ to: "/" });
   };
 
   const cycleTheme = () => {
-    const order: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
-    const current = order.indexOf(theme as 'light' | 'dark' | 'system');
+    const order: Array<"light" | "dark" | "system"> = [
+      "light",
+      "dark",
+      "system",
+    ];
+    const current = order.indexOf(theme as "light" | "dark" | "system");
     const next = order[(current + 1) % order.length];
     setTheme(next);
   };
 
-  const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
-  const themeLabel = theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : 'System';
+  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+  const themeLabel =
+    theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
 
-  const displayName = userProfile?.name || 'Account';
-  const initials = userProfile?.name ? getInitials(userProfile.name) : '?';
+  const displayName = userProfile?.name || "Account";
+  const initials = userProfile?.name ? getInitials(userProfile.name) : "?";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -92,7 +97,7 @@ export default function Layout() {
                 alt="Repo Radar"
                 className="w-8 h-8 rounded-lg"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
               <span className="font-mono font-bold text-lg text-primary group-hover:text-primary/80 transition-colors">
@@ -130,7 +135,11 @@ export default function Layout() {
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 pl-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 pl-1.5"
+                    >
                       <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-[10px] font-mono font-bold text-primary">
                         {initials}
                       </div>
@@ -146,21 +155,25 @@ export default function Layout() {
                           {initials}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-semibold truncate">{displayName}</span>
-                          <span className="text-xs text-muted-foreground font-normal">Logged in</span>
+                          <span className="text-sm font-semibold truncate">
+                            {displayName}
+                          </span>
+                          <span className="text-xs text-muted-foreground font-normal">
+                            Logged in
+                          </span>
                         </div>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => navigate({ to: '/profile' })}
+                      onClick={() => navigate({ to: "/profile" })}
                       className="gap-2 cursor-pointer"
                     >
                       <User className="w-4 h-4" />
                       Profile Home
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => navigate({ to: '/settings' })}
+                      onClick={() => navigate({ to: "/settings" })}
                       className="gap-2 cursor-pointer"
                     >
                       <Settings className="w-4 h-4" />
@@ -250,11 +263,15 @@ export default function Layout() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Telescope className="w-4 h-4 text-primary" />
-              <span className="font-mono font-semibold text-primary">RepoRadar</span>
+              <span className="font-mono font-semibold text-primary">
+                RepoRadar
+              </span>
               <span>© {new Date().getFullYear()}</span>
             </div>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
-              Built with <Heart className="w-3.5 h-3.5 text-primary fill-primary mx-1" /> using{' '}
+              Built with{" "}
+              <Heart className="w-3.5 h-3.5 text-primary fill-primary mx-1" />{" "}
+              using{" "}
               <a
                 href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
                 target="_blank"

@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { TrendingUp, Flame, RefreshCw } from 'lucide-react';
-import { RepositoryCard } from '../components/RepositoryCard';
-import ErrorState from '../components/ErrorState';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getTrendingRepositories } from '../services/githubApi';
-import { TimeRangeSelector } from '../components/TimeRangeSelector';
-import type { Repository } from '../types/github';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Flame, RefreshCw, TrendingUp } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import ErrorState from "../components/ErrorState";
+import { RepositoryCard } from "../components/RepositoryCard";
+import { TimeRangeSelector } from "../components/TimeRangeSelector";
+import { getTrendingRepositories } from "../services/githubApi";
+import type { Repository } from "../types/github";
 
-type TimeRange = 'day' | 'week' | 'month';
+type TimeRange = "day" | "week" | "month";
 
 function CardSkeleton({ rank }: { rank: number }) {
   return (
     <div className="relative bg-card border border-border rounded-xl p-4 space-y-3">
-      <div className="absolute top-3 right-3 text-xs font-mono text-muted-foreground/40">#{rank}</div>
+      <div className="absolute top-3 right-3 text-xs font-mono text-muted-foreground/40">
+        #{rank}
+      </div>
       <div className="flex justify-between">
         <div className="space-y-1.5 flex-1">
           <Skeleton className="h-4 w-48 bg-secondary" />
@@ -32,9 +34,9 @@ function CardSkeleton({ rank }: { rank: number }) {
 }
 
 const TIME_RANGE_LABELS: Record<TimeRange, string> = {
-  day: 'Today',
-  week: 'This Week',
-  month: 'This Month',
+  day: "Today",
+  week: "This Week",
+  month: "This Month",
 };
 
 export default function TrendingPage() {
@@ -42,7 +44,7 @@ export default function TrendingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+  const [timeRange, setTimeRange] = useState<TimeRange>("week");
 
   const fetchTrending = async (range: TimeRange = timeRange) => {
     setIsLoading(true);
@@ -52,15 +54,19 @@ export default function TrendingPage() {
       setRepos(items);
       setLastUpdated(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch trending repositories.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch trending repositories.",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fetchTrending is intentionally recreated; only timeRange should trigger
   useEffect(() => {
     fetchTrending(timeRange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const handleTimeRangeChange = (range: TimeRange) => {
@@ -75,7 +81,10 @@ export default function TrendingPage() {
           <div className="flex items-center gap-2 mb-2">
             <Flame className="w-5 h-5 text-primary" />
             <h1 className="font-mono font-bold text-xl text-foreground">
-              Trending <span className="text-primary">{TIME_RANGE_LABELS[timeRange]}</span>
+              Trending{" "}
+              <span className="text-primary">
+                {TIME_RANGE_LABELS[timeRange]}
+              </span>
             </h1>
           </div>
           <p className="text-sm text-muted-foreground font-mono">
@@ -88,7 +97,10 @@ export default function TrendingPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <TimeRangeSelector value={timeRange} onChange={handleTimeRangeChange} />
+          <TimeRangeSelector
+            value={timeRange}
+            onChange={handleTimeRangeChange}
+          />
           <Button
             onClick={() => fetchTrending(timeRange)}
             disabled={isLoading}
@@ -96,7 +108,9 @@ export default function TrendingPage() {
             size="sm"
             className="font-mono text-xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -111,6 +125,7 @@ export default function TrendingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 9 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders have no stable id
               <CardSkeleton key={i} rank={i + 1} />
             ))}
           </div>
@@ -120,7 +135,8 @@ export default function TrendingPage() {
       ) : (
         <div>
           <div className="text-xs font-mono text-muted-foreground mb-6">
-            <span className="text-primary">{repos.length}</span> trending repositories {TIME_RANGE_LABELS[timeRange].toLowerCase()}
+            <span className="text-primary">{repos.length}</span> trending
+            repositories {TIME_RANGE_LABELS[timeRange].toLowerCase()}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {repos.map((repo, index) => (

@@ -1,22 +1,39 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Star, GitFork, Eye, ExternalLink, Users, AlertCircle, TrendingUp, Activity, Bug } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookmarkButton } from '../components/BookmarkButton';
-import { ForkButton } from '../components/ForkButton';
-import { AISetupAssistant } from '../components/AISetupAssistant';
-import { ContributorsList } from '../components/ContributorsList';
-import { TechStackBadges } from '../components/TechStackBadges';
-import { MarkdownRenderer } from '../components/MarkdownRenderer';
-import { AIAnalysisPanel } from '../components/AIAnalysisPanel';
-import { getRepositoryByFullName, getRepositoryReadme, getRepositoryContributors, getRepositoryFileTree } from '../services/githubApi';
-import { detectTechStack } from '../utils/techStackDetector';
-import { useGetMyGithubToken } from '../hooks/useQueries';
-import type { ForkResult } from '../types/github';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import {
+  Activity,
+  AlertCircle,
+  ArrowLeft,
+  Bug,
+  Container,
+  ExternalLink,
+  Eye,
+  GitFork,
+  Star,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import React, { useState } from "react";
+import { AIAnalysisPanel } from "../components/AIAnalysisPanel";
+import { AISetupAssistant } from "../components/AISetupAssistant";
+import { BookmarkButton } from "../components/BookmarkButton";
+import { ContributorsList } from "../components/ContributorsList";
+import { ForkButton } from "../components/ForkButton";
+import { MarkdownRenderer } from "../components/MarkdownRenderer";
+import { TechStackBadges } from "../components/TechStackBadges";
+import { useGetMyGithubToken } from "../hooks/useQueries";
+import {
+  getRepositoryByFullName,
+  getRepositoryContributors,
+  getRepositoryFileTree,
+  getRepositoryReadme,
+} from "../services/githubApi";
+import type { ForkResult } from "../types/github";
+import { detectTechStack } from "../utils/techStackDetector";
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -24,7 +41,11 @@ function formatCount(n: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 interface RepoNavTabsProps {
@@ -34,10 +55,19 @@ interface RepoNavTabsProps {
 
 function RepoNavTabs({ owner, name }: RepoNavTabsProps) {
   const tabs = [
-    { label: 'Details', to: `/repo/${owner}/${name}`, icon: null },
-    { label: 'Star History', to: `/repo/${owner}/${name}/stars`, icon: TrendingUp },
-    { label: 'Activity', to: `/repo/${owner}/${name}/activity`, icon: Activity },
-    { label: 'Issues', to: `/repo/${owner}/${name}/issues`, icon: Bug },
+    { label: "Details", to: `/repo/${owner}/${name}`, icon: null },
+    {
+      label: "Star History",
+      to: `/repo/${owner}/${name}/stars`,
+      icon: TrendingUp,
+    },
+    {
+      label: "Activity",
+      to: `/repo/${owner}/${name}/activity`,
+      icon: Activity,
+    },
+    { label: "Issues", to: `/repo/${owner}/${name}/issues`, icon: Bug },
+    { label: "Docker", to: `/repo/${owner}/${name}/docker`, icon: Container },
   ];
 
   return (
@@ -47,7 +77,7 @@ function RepoNavTabs({ owner, name }: RepoNavTabsProps) {
           key={tab.to}
           to={tab.to}
           className="inline-flex items-center gap-1.5 px-3 py-2 font-mono text-xs text-muted-foreground hover:text-foreground border-b-2 border-transparent hover:border-primary/40 transition-colors whitespace-nowrap [&.active]:text-primary [&.active]:border-primary"
-          activeProps={{ className: 'text-primary border-primary' }}
+          activeProps={{ className: "text-primary border-primary" }}
           activeOptions={{ exact: true }}
         >
           {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
@@ -59,42 +89,51 @@ function RepoNavTabs({ owner, name }: RepoNavTabsProps) {
 }
 
 export default function RepoDetailsPage() {
-  const { owner, name } = useParams({ from: '/repo/$owner/$name' });
+  const { owner, name } = useParams({ from: "/repo/$owner/$name" });
   const navigate = useNavigate();
   const { data: token } = useGetMyGithubToken();
   const [forkedRepo, setForkedRepo] = useState<ForkResult | null>(null);
 
   const fullName = `${owner}/${name}`;
 
-  const { data: repo, isLoading: repoLoading, error: repoError } = useQuery({
-    queryKey: ['repo', fullName],
+  const {
+    data: repo,
+    isLoading: repoLoading,
+    error: repoError,
+  } = useQuery({
+    queryKey: ["repo", fullName],
     queryFn: () => getRepositoryByFullName(fullName, token),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: readme = '', isLoading: readmeLoading } = useQuery({
-    queryKey: ['readme', fullName],
+  const { data: readme = "", isLoading: readmeLoading } = useQuery({
+    queryKey: ["readme", fullName],
     queryFn: () => getRepositoryReadme(owner, name, token),
     enabled: !!repo,
     staleTime: 10 * 60 * 1000,
   });
 
   const { data: contributors = [], isLoading: contributorsLoading } = useQuery({
-    queryKey: ['contributors', fullName],
+    queryKey: ["contributors", fullName],
     queryFn: () => getRepositoryContributors(owner, name, token),
     enabled: !!repo,
     staleTime: 10 * 60 * 1000,
   });
 
   const { data: fileTree } = useQuery({
-    queryKey: ['filetree', fullName],
-    queryFn: () => getRepositoryFileTree(owner, name, repo?.default_branch || 'HEAD', token),
+    queryKey: ["filetree", fullName],
+    queryFn: () =>
+      getRepositoryFileTree(owner, name, repo?.default_branch || "HEAD", token),
     enabled: !!repo,
     staleTime: 10 * 60 * 1000,
   });
 
   const techBadges = repo
-    ? detectTechStack(repo.language, repo.topics, fileTree?.tree.map((f) => f.path) || [])
+    ? detectTechStack(
+        repo.language,
+        repo.topics,
+        fileTree?.tree.map((f) => f.path) || [],
+      )
     : [];
 
   if (repoLoading) {
@@ -116,7 +155,11 @@ export default function RepoDetailsPage() {
   if (repoError || !repo) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
-        <Button variant="ghost" onClick={() => navigate({ to: '/search' })} className="mb-6 gap-2">
+        <Button
+          variant="ghost"
+          onClick={() => navigate({ to: "/search" })}
+          className="mb-6 gap-2"
+        >
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
@@ -126,7 +169,9 @@ export default function RepoDetailsPage() {
           </div>
           <h2 className="font-semibold text-lg mb-2">Repository not found</h2>
           <p className="text-muted-foreground text-sm">
-            {repoError instanceof Error ? repoError.message : 'This repository may have been deleted or made private.'}
+            {repoError instanceof Error
+              ? repoError.message
+              : "This repository may have been deleted or made private."}
           </p>
         </div>
       </div>
@@ -139,7 +184,7 @@ export default function RepoDetailsPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate({ to: '/search' })}
+          onClick={() => navigate({ to: "/search" })}
           className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -150,7 +195,9 @@ export default function RepoDetailsPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="font-mono font-bold text-2xl text-primary">{repo.full_name}</h1>
+                <h1 className="font-mono font-bold text-2xl text-primary">
+                  {repo.full_name}
+                </h1>
                 <a
                   href={repo.html_url}
                   target="_blank"
@@ -161,7 +208,9 @@ export default function RepoDetailsPage() {
                 </a>
               </div>
               {repo.description && (
-                <p className="text-muted-foreground mt-1 leading-relaxed">{repo.description}</p>
+                <p className="text-muted-foreground mt-1 leading-relaxed">
+                  {repo.description}
+                </p>
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -177,21 +226,35 @@ export default function RepoDetailsPage() {
           <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Star className="w-4 h-4 text-yellow-400" />
-              <span className="font-medium text-foreground">{formatCount(repo.stargazers_count)}</span> stars
+              <span className="font-medium text-foreground">
+                {formatCount(repo.stargazers_count)}
+              </span>{" "}
+              stars
             </span>
             <span className="flex items-center gap-1.5">
               <GitFork className="w-4 h-4" />
-              <span className="font-medium text-foreground">{formatCount(repo.forks_count)}</span> forks
+              <span className="font-medium text-foreground">
+                {formatCount(repo.forks_count)}
+              </span>{" "}
+              forks
             </span>
             <span className="flex items-center gap-1.5">
               <Eye className="w-4 h-4" />
-              <span className="font-medium text-foreground">{formatCount(repo.watchers_count)}</span> watchers
+              <span className="font-medium text-foreground">
+                {formatCount(repo.watchers_count)}
+              </span>{" "}
+              watchers
             </span>
             <span className="flex items-center gap-1.5">
               <Users className="w-4 h-4" />
-              <span className="font-medium text-foreground">{repo.open_issues_count}</span> open issues
+              <span className="font-medium text-foreground">
+                {repo.open_issues_count}
+              </span>{" "}
+              open issues
             </span>
-            <span className="text-xs">Updated {formatDate(repo.pushed_at)}</span>
+            <span className="text-xs">
+              Updated {formatDate(repo.pushed_at)}
+            </span>
           </div>
 
           {repo.topics && repo.topics.length > 0 && (

@@ -1,32 +1,36 @@
-import React from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetCallerUserProfile, useGetUserSettings, useGetBookmarks } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "@tanstack/react-router";
 import {
-  User,
-  Settings,
-  Bookmark,
-  LogIn,
-  Copy,
-  Check,
-  Star,
   Activity,
+  Bookmark,
+  Check,
+  Copy,
   Eye,
   EyeOff,
   Globe,
   Lock,
-} from 'lucide-react';
-import { useState } from 'react';
+  LogIn,
+  Settings,
+  Star,
+  User,
+} from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import {
+  useGetBookmarks,
+  useGetCallerUserProfile,
+  useGetUserSettings,
+} from "../hooks/useQueries";
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((w) => w[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -53,7 +57,9 @@ function StatCard({
             {loading ? (
               <Skeleton className="h-5 w-12 mb-1 bg-secondary" />
             ) : (
-              <p className="font-mono font-bold text-lg text-foreground leading-none">{value}</p>
+              <p className="font-mono font-bold text-lg text-foreground leading-none">
+                {value}
+              </p>
             )}
             <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
           </div>
@@ -68,14 +74,15 @@ export default function ProfileHomePage() {
   const navigate = useNavigate();
   const isAuthenticated = !!identity;
 
-  const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
+  const { data: userProfile, isLoading: profileLoading } =
+    useGetCallerUserProfile();
   const { data: settings, isLoading: settingsLoading } = useGetUserSettings();
   const { data: bookmarks, isLoading: bookmarksLoading } = useGetBookmarks();
 
   const [copied, setCopied] = useState(false);
   const [showPrincipal, setShowPrincipal] = useState(false);
 
-  const principalId = identity?.getPrincipal().toString() ?? '';
+  const principalId = identity?.getPrincipal().toString() ?? "";
 
   const handleCopyPrincipal = () => {
     navigator.clipboard.writeText(principalId);
@@ -89,18 +96,22 @@ export default function ProfileHomePage() {
         <div className="p-4 rounded-full bg-primary/10 w-16 h-16 flex items-center justify-center mx-auto mb-4">
           <LogIn className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="font-mono font-bold text-2xl text-foreground mb-2">Login Required</h1>
-        <p className="text-muted-foreground mb-6">You need to be logged in to view your profile.</p>
-        <Button onClick={() => navigate({ to: '/' })}>Go to Home</Button>
+        <h1 className="font-mono font-bold text-2xl text-foreground mb-2">
+          Login Required
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          You need to be logged in to view your profile.
+        </p>
+        <Button onClick={() => navigate({ to: "/" })}>Go to Home</Button>
       </div>
     );
   }
 
-  const displayName = userProfile?.name || 'Anonymous';
-  const initials = userProfile?.name ? getInitials(userProfile.name) : '?';
+  const displayName = userProfile?.name || "Anonymous";
+  const initials = userProfile?.name ? getInitials(userProfile.name) : "?";
   const bookmarkCount = bookmarks?.length ?? 0;
-  const theme = settings?.theme ?? 'system';
-  const profileVisibility = settings?.profileVisibility ?? 'private';
+  const theme = settings?.theme ?? "system";
+  const profileVisibility = settings?.profileVisibility ?? "private";
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -124,7 +135,7 @@ export default function ProfileHomePage() {
                   alt={displayName}
                   className="w-20 h-20 rounded-full border-2 border-primary/40 object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
               ) : (
@@ -143,7 +154,9 @@ export default function ProfileHomePage() {
                 </div>
               ) : (
                 <>
-                  <h2 className="font-mono font-bold text-2xl text-foreground">{displayName}</h2>
+                  <h2 className="font-mono font-bold text-2xl text-foreground">
+                    {displayName}
+                  </h2>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-muted-foreground font-mono">
                       {showPrincipal
@@ -151,9 +164,12 @@ export default function ProfileHomePage() {
                         : `${principalId.slice(0, 12)}...${principalId.slice(-6)}`}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setShowPrincipal((v) => !v)}
                       className="text-muted-foreground hover:text-foreground transition-colors"
-                      title={showPrincipal ? 'Hide principal' : 'Show full principal'}
+                      title={
+                        showPrincipal ? "Hide principal" : "Show full principal"
+                      }
                     >
                       {showPrincipal ? (
                         <EyeOff className="w-3.5 h-3.5" />
@@ -162,6 +178,7 @@ export default function ProfileHomePage() {
                       )}
                     </button>
                     <button
+                      type="button"
                       onClick={handleCopyPrincipal}
                       className="text-muted-foreground hover:text-foreground transition-colors"
                       title="Copy principal ID"
@@ -174,13 +191,16 @@ export default function ProfileHomePage() {
                     </button>
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <Badge variant="outline" className="text-xs font-mono gap-1">
-                      {profileVisibility === 'public' ? (
+                    <Badge
+                      variant="outline"
+                      className="text-xs font-mono gap-1"
+                    >
+                      {profileVisibility === "public" ? (
                         <Globe className="w-3 h-3" />
                       ) : (
                         <Lock className="w-3 h-3" />
                       )}
-                      {profileVisibility === 'public' ? 'Public' : 'Private'}
+                      {profileVisibility === "public" ? "Public" : "Private"}
                     </Badge>
                     <Badge variant="outline" className="text-xs font-mono">
                       Theme: {theme}
@@ -194,7 +214,7 @@ export default function ProfileHomePage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate({ to: '/settings' })}
+              onClick={() => navigate({ to: "/settings" })}
               className="gap-2 shrink-0"
             >
               <Settings className="w-4 h-4" />
@@ -227,7 +247,7 @@ export default function ProfileHomePage() {
         <StatCard
           icon={User}
           label="Profile Status"
-          value={profileVisibility === 'public' ? 'Public' : 'Private'}
+          value={profileVisibility === "public" ? "Public" : "Private"}
           loading={settingsLoading}
         />
       </div>
@@ -243,7 +263,7 @@ export default function ProfileHomePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate({ to: '/bookmarks' })}
+              onClick={() => navigate({ to: "/bookmarks" })}
               className="text-xs text-primary hover:text-primary/80"
             >
               View all →
@@ -260,13 +280,17 @@ export default function ProfileHomePage() {
           ) : bookmarks && bookmarks.length > 0 ? (
             <div className="space-y-2">
               {bookmarks.slice(0, 5).map((b) => (
-                <div
+                <button
+                  type="button"
                   key={b.repoId}
-                  className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/40 transition-colors cursor-pointer group"
+                  className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/40 transition-colors cursor-pointer group text-left"
                   onClick={() => {
-                    const [owner, name] = b.repoId.split('/');
+                    const [owner, name] = b.repoId.split("/");
                     if (owner && name) {
-                      navigate({ to: '/repo/$owner/$name', params: { owner, name } });
+                      navigate({
+                        to: "/repo/$owner/$name",
+                        params: { owner, name },
+                      });
                     }
                   }}
                 >
@@ -275,19 +299,24 @@ export default function ProfileHomePage() {
                   </span>
                   <div className="flex gap-1 flex-wrap">
                     {b.tags.slice(0, 2).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0"
+                      >
                         {tag}
                       </Badge>
                     ))}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No bookmarks yet.{' '}
+              No bookmarks yet.{" "}
               <button
-                onClick={() => navigate({ to: '/search' })}
+                type="button"
+                onClick={() => navigate({ to: "/search" })}
                 className="text-primary hover:underline"
               >
                 Start exploring
@@ -296,26 +325,21 @@ export default function ProfileHomePage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Quick actions */}
       <div className="flex flex-wrap gap-3">
-        <Button
-          onClick={() => navigate({ to: '/settings' })}
-          className="gap-2"
-        >
+        <Button onClick={() => navigate({ to: "/settings" })} className="gap-2">
           <Settings className="w-4 h-4" />
           Go to Settings
         </Button>
         <Button
           variant="outline"
-          onClick={() => navigate({ to: '/search' })}
+          onClick={() => navigate({ to: "/search" })}
           className="gap-2"
         >
           Explore Repositories
         </Button>
         <Button
           variant="outline"
-          onClick={() => navigate({ to: '/bookmarks' })}
+          onClick={() => navigate({ to: "/bookmarks" })}
           className="gap-2"
         >
           <Bookmark className="w-4 h-4" />

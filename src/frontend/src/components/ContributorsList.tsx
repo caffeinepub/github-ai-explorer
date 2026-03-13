@@ -1,7 +1,7 @@
-import React from 'react';
-import type { Contributor } from '../types/github';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ExternalLink } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ExternalLink } from "lucide-react";
+import React from "react";
+import type { Contributor } from "../types/github";
 
 interface ContributorsListProps {
   contributors: Contributor[];
@@ -22,11 +22,15 @@ export function ContributorsList({ contributors }: ContributorsListProps) {
         >
           <Avatar className="w-8 h-8">
             <AvatarImage src={contributor.avatar_url} alt={contributor.login} />
-            <AvatarFallback className="text-xs">{contributor.login.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="text-xs">
+              {contributor.login.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{contributor.login}</p>
-            <p className="text-xs text-muted-foreground">{contributor.contributions.toLocaleString()} commits</p>
+            <p className="text-xs text-muted-foreground">
+              {contributor.contributions.toLocaleString()} commits
+            </p>
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>

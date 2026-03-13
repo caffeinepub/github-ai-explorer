@@ -1,25 +1,29 @@
-import { useState, useCallback, useMemo } from 'react';
-import { fuzzySearch } from '../utils/fuzzySearch';
-import { COMMON_COMMANDS, generateCommandSuggestions, type CommandSuggestion } from '../utils/aiCommandRules';
+import { useCallback, useMemo, useState } from "react";
+import {
+  COMMON_COMMANDS,
+  type CommandSuggestion,
+  generateCommandSuggestions,
+} from "../utils/aiCommandRules";
+import { fuzzySearch } from "../utils/fuzzySearch";
 
 export interface PaletteCommand {
   text: string;
   description: string;
-  source: 'history' | 'ai' | 'common';
+  source: "history" | "ai" | "common";
 }
 
 export function useCommandPalette(history: string[], workingDirectory: string) {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   const open = useCallback(() => {
     setIsOpen(true);
-    setQuery('');
+    setQuery("");
   }, []);
 
   const close = useCallback(() => {
     setIsOpen(false);
-    setQuery('');
+    setQuery("");
   }, []);
 
   const allCommands = useMemo<PaletteCommand[]>(() => {
@@ -30,22 +34,32 @@ export function useCommandPalette(history: string[], workingDirectory: string) {
     for (const h of [...history].reverse().slice(0, 20)) {
       if (!seen.has(h)) {
         seen.add(h);
-        cmds.push({ text: h, description: 'Recent command', source: 'history' });
+        cmds.push({
+          text: h,
+          description: "Recent command",
+          source: "history",
+        });
       }
     }
 
     // AI suggestions based on working directory context
     const contextInput =
-      workingDirectory.includes('node_modules') || workingDirectory.includes('package')
-        ? 'npm install run'
-        : workingDirectory.includes('.git') || workingDirectory.includes('git')
-        ? 'git status commit push'
-        : 'list files';
-    const aiSuggestions: CommandSuggestion[] = generateCommandSuggestions(contextInput);
+      workingDirectory.includes("node_modules") ||
+      workingDirectory.includes("package")
+        ? "npm install run"
+        : workingDirectory.includes(".git") || workingDirectory.includes("git")
+          ? "git status commit push"
+          : "list files";
+    const aiSuggestions: CommandSuggestion[] =
+      generateCommandSuggestions(contextInput);
     for (const s of aiSuggestions) {
       if (!seen.has(s.command)) {
         seen.add(s.command);
-        cmds.push({ text: s.command, description: s.description, source: 'ai' });
+        cmds.push({
+          text: s.command,
+          description: s.description,
+          source: "ai",
+        });
       }
     }
 
@@ -53,7 +67,11 @@ export function useCommandPalette(history: string[], workingDirectory: string) {
     for (const c of COMMON_COMMANDS) {
       if (!seen.has(c.command)) {
         seen.add(c.command);
-        cmds.push({ text: c.command, description: c.description, source: 'common' });
+        cmds.push({
+          text: c.command,
+          description: c.description,
+          source: "common",
+        });
       }
     }
 

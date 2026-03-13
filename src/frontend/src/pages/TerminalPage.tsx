@@ -1,28 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { Bot, FolderOpen, Save, Download, Keyboard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  Bot,
+  Download,
+  FolderOpen,
+  GitBranch,
+  Keyboard,
+  Save,
+} from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { useTerminalState, makeOutputLine } from '../hooks/useTerminalState';
-import { useBridgeStatus } from '../hooks/useBridgeStatus';
-import { useCommandPalette } from '../hooks/useCommandPalette';
+import { useBridgeStatus } from "../hooks/useBridgeStatus";
+import { useCommandPalette } from "../hooks/useCommandPalette";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useRepoContext } from "../hooks/useRepoContext";
 import {
   useLoadTerminalSessions,
   useSaveTerminalSession,
-} from '../hooks/useTerminalSessions';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
+} from "../hooks/useTerminalSessions";
+import { makeOutputLine, useTerminalState } from "../hooks/useTerminalState";
 
-import { TerminalTabs } from '../components/Terminal/TerminalTabs';
-import { TerminalViewport } from '../components/Terminal/TerminalViewport';
-import { TerminalSettingsMenu } from '../components/Terminal/TerminalSettings';
-import { BridgeStatusIndicator } from '../components/Terminal/BridgeStatusIndicator';
-import { AIAssistantPanel } from '../components/Terminal/AIAssistantPanel';
-import { FileBrowserPanel } from '../components/Terminal/FileBrowserPanel';
-import { SessionManager } from '../components/Terminal/SessionManager';
-import { CommandPalette } from '../components/Terminal/CommandPalette';
+import { AIAssistantPanel } from "../components/Terminal/AIAssistantPanel";
+import { BridgeStatusIndicator } from "../components/Terminal/BridgeStatusIndicator";
+import { CommandPalette } from "../components/Terminal/CommandPalette";
+import { FileBrowserPanel } from "../components/Terminal/FileBrowserPanel";
+import { SessionManager } from "../components/Terminal/SessionManager";
+import { TerminalSettingsMenu } from "../components/Terminal/TerminalSettings";
+import { TerminalTabs } from "../components/Terminal/TerminalTabs";
+import { TerminalViewport } from "../components/Terminal/TerminalViewport";
 
-import { streamCommand, executeCommand } from '../services/bridgeApi';
+import { executeCommand, streamCommand } from "../services/bridgeApi";
 
 export default function TerminalPage() {
   const navigate = useNavigate();
@@ -49,7 +63,7 @@ export default function TerminalPage() {
   } = useTerminalState();
 
   const { status: bridgeStatus, lastChecked } = useBridgeStatus();
-  const isConnected = bridgeStatus === 'connected';
+  const isConnected = bridgeStatus === "connected";
 
   const [showAI, setShowAI] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
@@ -60,11 +74,21 @@ export default function TerminalPage() {
     exitCode: number;
   } | null>(null);
 
-  const palette = useCommandPalette(activeTab?.commandHistory ?? [], activeTab?.workingDirectory ?? '~');
+  // Repo context for AI
+  const { repoContext, setRepoContext, clearRepoContext } = useRepoContext();
+  const [pinPopoverOpen, setPinPopoverOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinLoading, setPinLoading] = useState(false);
+
+  const palette = useCommandPalette(
+    activeTab?.commandHistory ?? [],
+    activeTab?.workingDirectory ?? "~",
+  );
   const abortRef = useRef<AbortController | null>(null);
 
   // ── Backend session persistence ──────────────────────────────────────────
-  const { data: backendSessions, isFetched: sessionsFetched } = useLoadTerminalSessions();
+  const { data: backendSessions, isFetched: sessionsFetched } =
+    useLoadTerminalSessions();
   const saveSessionMutation = useSaveTerminalSession();
   const restoredRef = useRef(false);
 
@@ -78,7 +102,12 @@ export default function TerminalPage() {
       restoredRef.current = true;
       loadSessionsFromBackend(backendSessions);
     }
-  }, [isAuthenticated, sessionsFetched, backendSessions, loadSessionsFromBackend]);
+  }, [
+    isAuthenticated,
+    sessionsFetched,
+    backendSessions,
+    loadSessionsFromBackend,
+  ]);
 
   // Auto-save active tab to backend after each command (debounced)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,7 +123,7 @@ export default function TerminalPage() {
         commandHistory: activeTab.commandHistory,
         workingDirectory: activeTab.workingDirectory,
         outputHistory: activeTab.outputBuffer
-          .filter((l) => l.type !== 'command')
+          .filter((l) => l.type !== "command")
           .map((l) => l.text)
           .slice(-100),
         createdAt: now,
@@ -105,6 +134,58 @@ export default function TerminalPage() {
     }, 1500);
   }, [isAuthenticated, activeTab, identity, saveSessionMutation]);
 
+  // ── Pin repo handler ──────────────────────────────────────────────────────
+  const handlePinRepo = useCallback(async () => {
+    const trimmed = pinInput.trim();
+    if (!trimmed || !trimmed.includes("/")) return;
+    const [owner, name] = trimmed.split("/");
+    if (!owner || !name) return;
+
+    setPinLoading(true);
+    try {
+      const pat = localStorage.getItem("githubPAT");
+      const headers: Record<string, string> = {
+        Accept: "application/vnd.github+json",
+      };
+      if (pat) headers.Authorization = `Bearer ${pat}`;
+
+      const res = await fetch(`https://api.github.com/repos/${owner}/${name}`, {
+        headers,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRepoContext({
+          owner,
+          name,
+          fullName: `${owner}/${name}`,
+          language: data.language ?? "",
+          topics: data.topics ?? [],
+        });
+      } else {
+        // Pin without language info
+        setRepoContext({
+          owner,
+          name,
+          fullName: `${owner}/${name}`,
+          language: "",
+          topics: [],
+        });
+      }
+    } catch {
+      setRepoContext({
+        owner,
+        name,
+        fullName: `${owner}/${name}`,
+        language: "",
+        topics: [],
+      });
+    } finally {
+      setPinLoading(false);
+      setPinPopoverOpen(false);
+      setPinInput("");
+    }
+  }, [pinInput, setRepoContext]);
+
   // ── Command runner ───────────────────────────────────────────────────────
   const runCommand = useCallback(
     async (command: string) => {
@@ -112,21 +193,21 @@ export default function TerminalPage() {
       const tabId = activeTab.id;
 
       // Handle built-in commands
-      if (command === 'clear') {
+      if (command === "clear") {
         clearOutput(tabId);
         return;
       }
 
       addToHistory(tabId, command);
-      appendOutput(tabId, makeOutputLine(command, 'command'));
+      appendOutput(tabId, makeOutputLine(command, "command"));
 
       if (!isConnected) {
         appendOutput(
           tabId,
           makeOutputLine(
-            'Error: Bridge not connected. Visit /bridge-setup to install the local bridge.',
-            'error'
-          )
+            "Error: Bridge not connected. Visit /bridge-setup to install the local bridge.",
+            "error",
+          ),
         );
         // Still auto-save even when bridge is not connected
         autoSaveSession();
@@ -142,54 +223,61 @@ export default function TerminalPage() {
         // Use streaming for long-running commands
         const longRunning =
           /^(npm|yarn|pnpm|pip|cargo|make|docker|kubectl|watch|tail|ping|top|htop|python|node|ruby|go run)/i.test(
-            command
+            command,
           );
 
         if (longRunning) {
           await streamCommand(
             command,
-            (line) => appendOutput(tabId, makeOutputLine(line, 'output')),
+            (line) => appendOutput(tabId, makeOutputLine(line, "output")),
             (exitCode) => {
               setTabRunning(tabId, false);
               if (exitCode !== 0) {
                 appendOutput(
                   tabId,
-                  makeOutputLine(`Process exited with code ${exitCode}`, 'error')
+                  makeOutputLine(
+                    `Process exited with code ${exitCode}`,
+                    "error",
+                  ),
                 );
               }
               autoSaveSession();
             },
-            abortRef.current.signal
+            abortRef.current.signal,
           );
         } else {
           const result = await executeCommand(command);
 
           if (result.stdout) {
-            result.stdout.split('\n').forEach((line) => {
-              if (line) appendOutput(tabId, makeOutputLine(line, 'output'));
-            });
+            for (const line of result.stdout.split("\n")) {
+              if (line) appendOutput(tabId, makeOutputLine(line, "output"));
+            }
           }
           if (result.stderr) {
-            result.stderr.split('\n').forEach((line) => {
-              if (line) appendOutput(tabId, makeOutputLine(line, 'error'));
-            });
+            for (const line of result.stderr.split("\n")) {
+              if (line) appendOutput(tabId, makeOutputLine(line, "error"));
+            }
           }
 
           if (result.exitCode !== 0) {
-            setLastFailedCommand({ command, stderr: result.stderr, exitCode: result.exitCode });
+            setLastFailedCommand({
+              command,
+              stderr: result.stderr,
+              exitCode: result.exitCode,
+            });
           }
 
           // Update working directory if cd command
-          if (command.startsWith('cd ') && result.exitCode === 0) {
+          if (command.startsWith("cd ") && result.exitCode === 0) {
             const newDir = command.slice(3).trim();
-            setWorkingDirectory(tabId, newDir || '~');
+            setWorkingDirectory(tabId, newDir || "~");
           }
 
           autoSaveSession();
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Unknown error';
-        appendOutput(tabId, makeOutputLine(`Error: ${msg}`, 'error'));
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        appendOutput(tabId, makeOutputLine(`Error: ${msg}`, "error"));
         autoSaveSession();
       } finally {
         setTabRunning(tabId, false);
@@ -204,7 +292,7 @@ export default function TerminalPage() {
       setTabRunning,
       setWorkingDirectory,
       autoSaveSession,
-    ]
+    ],
   );
 
   const handlePaletteSelect = (command: string) => {
@@ -227,7 +315,7 @@ export default function TerminalPage() {
               alt="Terminal"
               className="w-5 h-5 rounded opacity-80"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).style.display = "none";
               }}
             />
             <span className="text-xs font-mono font-semibold text-white/60 hidden sm:inline">
@@ -242,25 +330,95 @@ export default function TerminalPage() {
               onClick={() => setShowFiles(!showFiles)}
               className={`h-7 gap-1.5 text-xs font-mono ${
                 showFiles
-                  ? 'text-yellow-400 bg-yellow-400/10'
-                  : 'text-white/50 hover:text-white hover:bg-white/10'
+                  ? "text-yellow-400 bg-yellow-400/10"
+                  : "text-white/50 hover:text-white hover:bg-white/10"
               }`}
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Files</span>
             </Button>
+
+            {/* Pin Repo button */}
+            <Popover open={pinPopoverOpen} onOpenChange={setPinPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  data-ocid="terminal.pin_repo.button"
+                  className={`h-7 gap-1.5 text-xs font-mono relative ${
+                    repoContext
+                      ? "text-neon-green bg-neon-green/10"
+                      : "text-white/50 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <GitBranch className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Pin Repo</span>
+                  {repoContext && (
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-green-400" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                data-ocid="terminal.pin_repo.popover"
+                className="w-64 bg-[#0d1117] border border-white/10 p-3"
+                align="end"
+              >
+                <p className="text-[11px] font-mono text-white/60 mb-2">
+                  Pin a repo for context-aware AI suggestions
+                </p>
+                <div className="flex gap-1">
+                  <Input
+                    data-ocid="terminal.pin_repo.input"
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handlePinRepo()}
+                    placeholder="owner/repo"
+                    className="h-7 text-[11px] font-mono bg-black/30 border-white/10 text-white/80 placeholder-white/20"
+                  />
+                  <Button
+                    size="sm"
+                    data-ocid="terminal.pin_repo.confirm.button"
+                    onClick={handlePinRepo}
+                    disabled={pinLoading || !pinInput.trim().includes("/")}
+                    className="h-7 px-2 bg-neon-green/10 hover:bg-neon-green/20 border border-neon-green/30 text-neon-green text-[11px]"
+                  >
+                    {pinLoading ? (
+                      <span className="w-3 h-3 border border-neon-green border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "Pin"
+                    )}
+                  </Button>
+                </div>
+                {repoContext && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearRepoContext();
+                      setPinPopoverOpen(false);
+                    }}
+                    className="mt-2 text-[10px] font-mono text-white/30 hover:text-red-400 transition-colors"
+                  >
+                    Unpin current: {repoContext.fullName}
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
+
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowAI(!showAI)}
-              className={`h-7 gap-1.5 text-xs font-mono ${
+              className={`h-7 gap-1.5 text-xs font-mono relative ${
                 showAI
-                  ? 'text-neon-green bg-neon-green/10'
-                  : 'text-white/50 hover:text-white hover:bg-white/10'
+                  ? "text-neon-green bg-neon-green/10"
+                  : "text-white/50 hover:text-white hover:bg-white/10"
               }`}
             >
               <Bot className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">AI</span>
+              {repoContext && (
+                <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-green-400" />
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -274,7 +432,7 @@ export default function TerminalPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate({ to: '/bridge-setup' })}
+              onClick={() => navigate({ to: "/bridge-setup" })}
               className="h-7 gap-1.5 text-xs font-mono text-white/50 hover:text-white hover:bg-white/10"
             >
               <Download className="w-3.5 h-3.5" />
@@ -293,8 +451,14 @@ export default function TerminalPage() {
                 ⌘K
               </kbd>
             </Button>
-            <TerminalSettingsMenu settings={settings} onUpdate={updateSettings} />
-            <BridgeStatusIndicator status={bridgeStatus} lastChecked={lastChecked} />
+            <TerminalSettingsMenu
+              settings={settings}
+              onUpdate={updateSettings}
+            />
+            <BridgeStatusIndicator
+              status={bridgeStatus}
+              lastChecked={lastChecked}
+            />
           </div>
         </div>
 
@@ -338,6 +502,8 @@ export default function TerminalPage() {
               onRunCommand={runCommand}
               lastFailedCommand={lastFailedCommand}
               commandHistory={activeTab?.commandHistory ?? []}
+              repoContext={repoContext}
+              onUnpinRepo={clearRepoContext}
             />
           )}
         </div>

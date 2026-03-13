@@ -1,5 +1,8 @@
-import { useState, useCallback } from 'react';
-import { generateCommandSuggestions, type CommandSuggestion } from '../utils/aiCommandRules';
+import { useCallback, useState } from "react";
+import {
+  type CommandSuggestion,
+  generateCommandSuggestions,
+} from "../utils/aiCommandRules";
 
 export function useAICommandSuggestion() {
   const [suggestions, setSuggestions] = useState<CommandSuggestion[]>([]);

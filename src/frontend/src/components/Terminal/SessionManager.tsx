@@ -1,36 +1,53 @@
-import React, { useState } from 'react';
-import { Save, Trash2, RotateCcw, Clock, FolderOpen, Loader2, Terminal } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
+  Clock,
+  FolderOpen,
+  Loader2,
+  RotateCcw,
+  Save,
+  Terminal,
+  Trash2,
+} from "lucide-react";
+import React, { useState } from "react";
+import type { TerminalSession } from "../../backend";
+import { useInternetIdentity } from "../../hooks/useInternetIdentity";
+import {
+  useDeleteTerminalSession,
   useLoadTerminalSessions,
   useSaveTerminalSessionWithToast,
-  useDeleteTerminalSession,
-} from '../../hooks/useTerminalSessions';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import type { TerminalTab } from '../../hooks/useTerminalState';
-import type { TerminalSession } from '../../backend';
+} from "../../hooks/useTerminalSessions";
+import type { TerminalTab } from "../../hooks/useTerminalState";
 
 interface SessionManagerProps {
   open: boolean;
   onClose: () => void;
   activeTab: TerminalTab;
-  onRestoreSession: (session: { name: string; commandHistory: string[]; workingDirectory: string }) => void;
+  onRestoreSession: (session: {
+    name: string;
+    commandHistory: string[];
+    workingDirectory: string;
+  }) => void;
 }
 
-export function SessionManager({ open, onClose, activeTab, onRestoreSession }: SessionManagerProps) {
+export function SessionManager({
+  open,
+  onClose,
+  activeTab,
+  onRestoreSession,
+}: SessionManagerProps) {
   const { identity } = useInternetIdentity();
   const { data: sessions = [], isLoading } = useLoadTerminalSessions();
   const saveSession = useSaveTerminalSessionWithToast();
   const deleteSession = useDeleteTerminalSession();
-  const [saveName, setSaveName] = useState('');
+  const [saveName, setSaveName] = useState("");
 
   const handleSave = async () => {
     if (!saveName.trim() || !identity) return;
@@ -42,7 +59,7 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
       commandHistory: activeTab.commandHistory,
       workingDirectory: activeTab.workingDirectory,
       outputHistory: activeTab.outputBuffer
-        .filter((l) => l.type !== 'command')
+        .filter((l) => l.type !== "command")
         .map((l) => l.text)
         .slice(-100),
       createdAt: now,
@@ -50,7 +67,7 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
       lastSavedAt: now,
     };
     await saveSession.mutateAsync(session);
-    setSaveName('');
+    setSaveName("");
   };
 
   const handleRestore = (session: TerminalSession) => {
@@ -86,14 +103,16 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
         {!identity ? (
           <div className="py-8 text-center space-y-2">
             <Terminal className="w-8 h-8 text-white/20 mx-auto" />
-            <p className="text-white/40 text-sm">Login to save and restore sessions.</p>
+            <p className="text-white/40 text-sm">
+              Login to save and restore sessions.
+            </p>
           </div>
         ) : (
           <>
             {/* Save current session */}
             <div className="space-y-2">
               <p className="text-xs text-white/50">
-                Save current session:{' '}
+                Save current session:{" "}
                 <span className="text-neon-green">{activeTab.name}</span>
               </p>
               <div className="flex gap-2">
@@ -102,7 +121,7 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="Session name..."
                   className="bg-black/30 border-white/10 text-white placeholder-white/20 text-xs h-8"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSave()}
                   disabled={saveSession.isPending}
                 />
                 <Button
@@ -122,7 +141,7 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
 
             <div className="border-t border-white/10 pt-3">
               <p className="text-xs text-white/50 mb-2">
-                Saved sessions ({isLoading ? '…' : sessions.length})
+                Saved sessions ({isLoading ? "…" : sessions.length})
               </p>
               {isLoading ? (
                 <div className="flex justify-center py-6">
@@ -136,14 +155,17 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
                 <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                   {sessions.map((session) => {
                     const isDeleting =
-                      deleteSession.isPending && deleteSession.variables === session.id;
+                      deleteSession.isPending &&
+                      deleteSession.variables === session.id;
                     return (
                       <div
                         key={session.id}
                         className="flex items-center gap-2 p-2 rounded border border-white/5 bg-white/[0.02] hover:bg-white/5 transition-colors"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-white/80 truncate">{session.name}</p>
+                          <p className="text-xs text-white/80 truncate">
+                            {session.name}
+                          </p>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                             <span className="text-[10px] text-white/30 flex items-center gap-0.5">
                               <FolderOpen className="w-2.5 h-2.5" />
@@ -155,7 +177,7 @@ export function SessionManager({ open, onClose, activeTab, onRestoreSession }: S
                             </span>
                             <span className="text-[10px] text-white/20">
                               {session.commandHistory.length} cmd
-                              {session.commandHistory.length !== 1 ? 's' : ''}
+                              {session.commandHistory.length !== 1 ? "s" : ""}
                             </span>
                           </div>
                         </div>

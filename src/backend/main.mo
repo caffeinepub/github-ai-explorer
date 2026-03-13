@@ -6,10 +6,10 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import Iter "mo:core/Iter";
 import Text "mo:core/Text";
-import Migration "migration";
+
 
 // Enable migration on upgrade
-(with migration = Migration.run)
+
 actor {
   type BookmarkID = Text;
   type Tag = Text;

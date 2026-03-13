@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { TerminalSession } from '../backend';
+import { useCallback, useEffect, useState } from "react";
+import type { TerminalSession } from "../backend";
 
-export type TerminalTheme = 'dark' | 'light' | 'solarized';
-export type FontSize = 'sm' | 'md' | 'lg';
+export type TerminalTheme = "dark" | "light" | "solarized";
+export type FontSize = "sm" | "md" | "lg";
 
 export interface OutputLine {
   id: string;
   text: string;
-  type: 'output' | 'error' | 'info' | 'command' | 'ai';
+  type: "output" | "error" | "info" | "command" | "ai";
   timestamp: number;
 }
 
@@ -27,24 +27,41 @@ export interface TerminalSettings {
 }
 
 let lineCounter = 0;
-export function makeOutputLine(text: string, type: OutputLine['type'] = 'output'): OutputLine {
-  return { id: `line-${++lineCounter}-${Date.now()}`, text, type, timestamp: Date.now() };
+export function makeOutputLine(
+  text: string,
+  type: OutputLine["type"] = "output",
+): OutputLine {
+  return {
+    id: `line-${++lineCounter}-${Date.now()}`,
+    text,
+    type,
+    timestamp: Date.now(),
+  };
 }
 
 function createTab(name?: string): TerminalTab {
   return {
     id: `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: name || 'Terminal',
+    name: name || "Terminal",
     commandHistory: [],
-    outputBuffer: [makeOutputLine('Welcome to WebTerminal. Connect the local bridge to execute real commands.', 'info')],
-    workingDirectory: '~',
+    outputBuffer: [
+      makeOutputLine(
+        "Welcome to WebTerminal. Connect the local bridge to execute real commands.",
+        "info",
+      ),
+    ],
+    workingDirectory: "~",
     isRunning: false,
   };
 }
 
-const STORAGE_KEY = 'terminal-state';
+const STORAGE_KEY = "terminal-state";
 
-function loadFromStorage(): { tabs: TerminalTab[]; activeTabIndex: number; settings: TerminalSettings } | null {
+function loadFromStorage(): {
+  tabs: TerminalTab[];
+  activeTabIndex: number;
+  settings: TerminalSettings;
+} | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -54,11 +71,18 @@ function loadFromStorage(): { tabs: TerminalTab[]; activeTabIndex: number; setti
   }
 }
 
-function saveToStorage(tabs: TerminalTab[], activeTabIndex: number, settings: TerminalSettings) {
+function saveToStorage(
+  tabs: TerminalTab[],
+  activeTabIndex: number,
+  settings: TerminalSettings,
+) {
   try {
     // Only persist history and settings, not full output buffers (keep last 50 lines)
     const toSave = {
-      tabs: tabs.map((t) => ({ ...t, outputBuffer: t.outputBuffer.slice(-50) })),
+      tabs: tabs.map((t) => ({
+        ...t,
+        outputBuffer: t.outputBuffer.slice(-50),
+      })),
       activeTabIndex,
       settings,
     };
@@ -73,7 +97,7 @@ export function sessionToTab(session: TerminalSession): TerminalTab {
   const outputLines: OutputLine[] = session.outputHistory.map((line, i) => ({
     id: `restored-${session.id}-${i}`,
     text: line,
-    type: 'output' as const,
+    type: "output" as const,
     timestamp: Number(session.lastUsedAt) / 1_000_000,
   }));
 
@@ -82,7 +106,10 @@ export function sessionToTab(session: TerminalSession): TerminalTab {
     name: session.name,
     commandHistory: session.commandHistory,
     outputBuffer: [
-      makeOutputLine(`Session "${session.name}" restored. Working directory: ${session.workingDirectory}`, 'info'),
+      makeOutputLine(
+        `Session "${session.name}" restored. Working directory: ${session.workingDirectory}`,
+        "info",
+      ),
       ...outputLines,
     ],
     workingDirectory: session.workingDirectory,
@@ -94,11 +121,17 @@ export function useTerminalState() {
   const stored = loadFromStorage();
 
   const [tabs, setTabs] = useState<TerminalTab[]>(
-    stored?.tabs?.length ? stored.tabs : [createTab()]
+    stored?.tabs?.length ? stored.tabs : [createTab()],
   );
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(stored?.activeTabIndex ?? 0);
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(
+    stored?.activeTabIndex ?? 0,
+  );
   const [settings, setSettings] = useState<TerminalSettings>(
-    stored?.settings ?? { theme: 'dark', fontSize: 'md', showTimestamps: false }
+    stored?.settings ?? {
+      theme: "dark",
+      fontSize: "md",
+      showTimestamps: false,
+    },
   );
   // Track whether backend sessions have been loaded to avoid double-restore
   const [backendSessionsLoaded, setBackendSessionsLoaded] = useState(false);
@@ -141,8 +174,8 @@ export function useTerminalState() {
   const appendOutput = useCallback((tabId: string, line: OutputLine) => {
     setTabs((prev) =>
       prev.map((t) =>
-        t.id === tabId ? { ...t, outputBuffer: [...t.outputBuffer, line] } : t
-      )
+        t.id === tabId ? { ...t, outputBuffer: [...t.outputBuffer, line] } : t,
+      ),
     );
   }, []);
 
@@ -150,9 +183,9 @@ export function useTerminalState() {
     setTabs((prev) =>
       prev.map((t) =>
         t.id === tabId
-          ? { ...t, outputBuffer: [makeOutputLine('Screen cleared.', 'info')] }
-          : t
-      )
+          ? { ...t, outputBuffer: [makeOutputLine("Screen cleared.", "info")] }
+          : t,
+      ),
     );
   }, []);
 
@@ -162,19 +195,19 @@ export function useTerminalState() {
         if (t.id !== tabId) return t;
         const history = t.commandHistory.filter((c) => c !== command);
         return { ...t, commandHistory: [...history, command].slice(-200) };
-      })
+      }),
     );
   }, []);
 
   const setWorkingDirectory = useCallback((tabId: string, dir: string) => {
     setTabs((prev) =>
-      prev.map((t) => (t.id === tabId ? { ...t, workingDirectory: dir } : t))
+      prev.map((t) => (t.id === tabId ? { ...t, workingDirectory: dir } : t)),
     );
   }, []);
 
   const setTabRunning = useCallback((tabId: string, running: boolean) => {
     setTabs((prev) =>
-      prev.map((t) => (t.id === tabId ? { ...t, isRunning: running } : t))
+      prev.map((t) => (t.id === tabId ? { ...t, isRunning: running } : t)),
     );
   }, []);
 
@@ -183,13 +216,20 @@ export function useTerminalState() {
   }, []);
 
   const restoreSession = useCallback(
-    (sessionData: { name: string; commandHistory: string[]; workingDirectory: string }) => {
+    (sessionData: {
+      name: string;
+      commandHistory: string[];
+      workingDirectory: string;
+    }) => {
       const newTab: TerminalTab = {
         id: `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         name: sessionData.name,
         commandHistory: sessionData.commandHistory,
         outputBuffer: [
-          makeOutputLine(`Session "${sessionData.name}" restored. Working directory: ${sessionData.workingDirectory}`, 'info'),
+          makeOutputLine(
+            `Session "${sessionData.name}" restored. Working directory: ${sessionData.workingDirectory}`,
+            "info",
+          ),
         ],
         workingDirectory: sessionData.workingDirectory,
         isRunning: false,
@@ -197,23 +237,26 @@ export function useTerminalState() {
       setTabs((prev) => [...prev, newTab]);
       setActiveTabIndex((prev) => prev + 1);
     },
-    []
+    [],
   );
 
   /**
    * Load sessions from the backend and replace the current tabs.
    * If sessions is empty, keep the default tab.
    */
-  const loadSessionsFromBackend = useCallback((sessions: TerminalSession[]) => {
-    if (backendSessionsLoaded) return;
-    setBackendSessionsLoaded(true);
+  const loadSessionsFromBackend = useCallback(
+    (sessions: TerminalSession[]) => {
+      if (backendSessionsLoaded) return;
+      setBackendSessionsLoaded(true);
 
-    if (sessions.length === 0) return;
+      if (sessions.length === 0) return;
 
-    const restoredTabs = sessions.map(sessionToTab);
-    setTabs(restoredTabs);
-    setActiveTabIndex(0);
-  }, [backendSessionsLoaded]);
+      const restoredTabs = sessions.map(sessionToTab);
+      setTabs(restoredTabs);
+      setActiveTabIndex(0);
+    },
+    [backendSessionsLoaded],
+  );
 
   return {
     tabs,

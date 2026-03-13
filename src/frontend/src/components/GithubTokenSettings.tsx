@@ -1,26 +1,40 @@
-import React, { useState } from 'react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Key, Eye, EyeOff, Trash2, CheckCircle, ExternalLink } from 'lucide-react';
-import { useGetMyGithubToken, useSetMyGithubToken, useRemoveMyGithubToken } from '../hooks/useQueries';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  CheckCircle,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Key,
+  Trash2,
+} from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "sonner";
+import {
+  useGetMyGithubToken,
+  useRemoveMyGithubToken,
+  useSetMyGithubToken,
+} from "../hooks/useQueries";
 
 interface GithubTokenSettingsProps {
   open: boolean;
   onClose: () => void;
 }
 
-export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps) {
-  const [tokenInput, setTokenInput] = useState('');
+export function GithubTokenSettings({
+  open,
+  onClose,
+}: GithubTokenSettingsProps) {
+  const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
 
   const { data: existingToken, isLoading } = useGetMyGithubToken();
@@ -33,19 +47,19 @@ export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps)
     if (!tokenInput.trim()) return;
     try {
       await setToken.mutateAsync(tokenInput.trim());
-      setTokenInput('');
-      toast.success('GitHub token saved successfully');
+      setTokenInput("");
+      toast.success("GitHub token saved successfully");
     } catch {
-      toast.error('Failed to save token');
+      toast.error("Failed to save token");
     }
   };
 
   const handleRemove = async () => {
     try {
       await removeToken.mutateAsync();
-      toast.success('GitHub token removed');
+      toast.success("GitHub token removed");
     } catch {
-      toast.error('Failed to remove token');
+      toast.error("Failed to remove token");
     }
   };
 
@@ -60,7 +74,8 @@ export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps)
             <DialogTitle>GitHub Personal Access Token</DialogTitle>
           </div>
           <DialogDescription>
-            Your token is stored securely and used for forking repositories and committing setup files.
+            Your token is stored securely and used for forking repositories and
+            committing setup files.
           </DialogDescription>
         </DialogHeader>
 
@@ -74,7 +89,10 @@ export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps)
             <Alert>
               <CheckCircle className="w-4 h-4 text-green-500" />
               <AlertDescription className="flex items-center justify-between">
-                <span>Token saved: <code className="font-mono">{'•'.repeat(20)}</code></span>
+                <span>
+                  Token saved:{" "}
+                  <code className="font-mono">{"•".repeat(20)}</code>
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -93,11 +111,13 @@ export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps)
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="pat-input">{hasToken ? 'Update Token' : 'Enter Token'}</Label>
+            <Label htmlFor="pat-input">
+              {hasToken ? "Update Token" : "Enter Token"}
+            </Label>
             <div className="relative">
               <Input
                 id="pat-input"
-                type={showToken ? 'text' : 'password'}
+                type={showToken ? "text" : "password"}
                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
@@ -108,11 +128,15 @@ export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps)
                 onClick={() => setShowToken(!showToken)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showToken ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Requires <code>repo</code> scope.{' '}
+              Requires <code>repo</code> scope.{" "}
               <a
                 href="https://github.com/settings/tokens/new?scopes=repo&description=Repo+Radar"
                 target="_blank"
@@ -135,11 +159,15 @@ export function GithubTokenSettings({ open, onClose }: GithubTokenSettingsProps)
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Saving...
                 </span>
+              ) : hasToken ? (
+                "Update Token"
               ) : (
-                hasToken ? 'Update Token' : 'Save Token'
+                "Save Token"
               )}
             </Button>
-            <Button variant="outline" onClick={onClose}>Close</Button>
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
           </div>
         </div>
       </DialogContent>

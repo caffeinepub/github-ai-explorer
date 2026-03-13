@@ -1,13 +1,18 @@
-import { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { listDirectory, type FileEntry } from '../services/bridgeApi';
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { type FileEntry, listDirectory } from "../services/bridgeApi";
 
 export function useFileBrowser(bridgeConnected: boolean) {
-  const [currentPath, setCurrentPath] = useState<string>('~');
+  const [currentPath, setCurrentPath] = useState<string>("~");
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
-  const { data: entries = [], isLoading, error, refetch } = useQuery<FileEntry[]>({
-    queryKey: ['fileBrowser', currentPath],
+  const {
+    data: entries = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<FileEntry[]>({
+    queryKey: ["fileBrowser", currentPath],
     queryFn: () => listDirectory(currentPath),
     enabled: bridgeConnected,
     retry: false,
@@ -32,10 +37,10 @@ export function useFileBrowser(bridgeConnected: boolean) {
   }, []);
 
   const goUp = useCallback(() => {
-    if (currentPath === '~' || currentPath === '/') return;
-    const parts = currentPath.replace(/\/$/, '').split('/');
+    if (currentPath === "~" || currentPath === "/") return;
+    const parts = currentPath.replace(/\/$/, "").split("/");
     parts.pop();
-    setCurrentPath(parts.join('/') || '/');
+    setCurrentPath(parts.join("/") || "/");
   }, [currentPath]);
 
   return {
