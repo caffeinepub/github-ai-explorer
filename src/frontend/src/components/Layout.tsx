@@ -10,8 +10,13 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
+  ArrowLeftRight,
   Bookmark,
+  ChevronDown,
+  ChevronUp,
+  Code,
   GitBranch,
+  GitCommit,
   Heart,
   Key,
   LogIn,
@@ -22,14 +27,17 @@ import {
   Settings,
   Sun,
   Telescope,
+  Terminal,
   TrendingUp,
   User,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetCallerUserProfile } from "../hooks/useQueries";
 import { useTheme } from "../hooks/useTheme";
 import { GithubTokenSettings } from "./GithubTokenSettings";
+
+const TerminalPage = React.lazy(() => import("../pages/TerminalPage"));
 
 function getInitials(name: string): string {
   return name
@@ -49,6 +57,7 @@ export default function Layout() {
   const { data: userProfile } = useGetCallerUserProfile();
   const [tokenSettingsOpen, setTokenSettingsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const [terminalDockedOpen, setTerminalDockedOpen] = useState(false);
 
   const handleLogin = async () => {
     try {
@@ -133,6 +142,30 @@ export default function Layout() {
               >
                 <GitBranch className="w-4 h-4" />
                 Workflows
+              </Link>
+              <Link
+                to="/commit-msg"
+                data-ocid="nav.commit-msg.link"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <GitCommit className="w-4 h-4" />
+                Commit Msg
+              </Link>
+              <Link
+                to="/compare"
+                data-ocid="nav.compare.link"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                Compare
+              </Link>
+              <Link
+                to="/terminal"
+                data-ocid="nav.terminal.link"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <Terminal className="w-4 h-4" />
+                Terminal
               </Link>
             </nav>
 
@@ -232,6 +265,7 @@ export default function Layout() {
             </div>
           </div>
 
+          {/* Mobile nav */}
           <div className="flex md:hidden items-center gap-1 pb-2 overflow-x-auto">
             <Link
               to="/search"
@@ -262,11 +296,35 @@ export default function Layout() {
               <GitBranch className="w-3.5 h-3.5" />
               Workflows
             </Link>
+            <Link
+              to="/commit-msg"
+              data-ocid="nav.commit-msg.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <GitCommit className="w-3.5 h-3.5" />
+              Commit Msg
+            </Link>
+            <Link
+              to="/compare"
+              data-ocid="nav.compare.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              Compare
+            </Link>
+            <Link
+              to="/terminal"
+              data-ocid="nav.terminal.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <Terminal className="w-3.5 h-3.5" />
+              Terminal
+            </Link>
           </div>
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className={`flex-1 ${terminalDockedOpen ? "pb-0" : "pb-10"}`}>
         <Outlet />
       </main>
 
@@ -296,6 +354,91 @@ export default function Layout() {
           </div>
         </div>
       </footer>
+
+      {/* Docked Terminal Bar */}
+      <div
+        data-ocid="terminal.panel"
+        className="sticky bottom-0 z-50 border-t border-white/10"
+        style={{ background: "#0d1117" }}
+      >
+        {/* Collapsed bar / header */}
+        <button
+          type="button"
+          className="w-full flex items-center justify-between px-4 h-10 cursor-pointer select-none"
+          style={{ background: "#161b22" }}
+          onClick={() => setTerminalDockedOpen((o) => !o)}
+        >
+          <div className="flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-green-400" />
+            <span className="text-xs font-mono font-semibold text-white/70 tracking-wide">
+              TERMINAL
+            </span>
+            {terminalDockedOpen && (
+              <span className="text-[10px] font-mono text-white/30 hidden sm:inline">
+                — docked
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              data-ocid="terminal.toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTerminalDockedOpen((o) => !o);
+              }}
+              className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+              title={
+                terminalDockedOpen ? "Minimize terminal" : "Expand terminal"
+              }
+            >
+              <Code className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Pair</span>
+            </button>
+            <button
+              type="button"
+              data-ocid="terminal.toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTerminalDockedOpen((o) => !o);
+              }}
+              className="p-1 rounded text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+              title={terminalDockedOpen ? "Collapse" : "Expand"}
+            >
+              {terminalDockedOpen ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronUp className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </button>
+
+        {/* Expanded terminal panel */}
+        {terminalDockedOpen && (
+          <div
+            className="overflow-hidden"
+            style={{ height: "50vh" }}
+            data-ocid="terminal.section"
+          >
+            <Suspense
+              fallback={
+                <div
+                  className="flex items-center justify-center h-full"
+                  data-ocid="terminal.loading_state"
+                >
+                  <span className="text-xs font-mono text-white/40 animate-pulse">
+                    Loading terminal...
+                  </span>
+                </div>
+              }
+            >
+              <TerminalPage />
+            </Suspense>
+          </div>
+        )}
+      </div>
 
       {isAuthenticated && (
         <GithubTokenSettings

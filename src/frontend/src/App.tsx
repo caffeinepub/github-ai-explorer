@@ -15,11 +15,13 @@ import ActivityHeatmapPage from "./pages/ActivityHeatmapPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import BridgeSetupPage from "./pages/BridgeSetupPage";
 import CICDPage from "./pages/CICDPage";
+import CommitMessagePage from "./pages/CommitMessagePage";
 import DockerPage from "./pages/DockerPage";
 import HomePage from "./pages/HomePage";
 import IssueTrackerPage from "./pages/IssueTrackerPage";
 import PRPulsePage from "./pages/PRPulsePage";
 import ProfileHomePage from "./pages/ProfileHomePage";
+import RepoComparePage from "./pages/RepoComparePage";
 import RepoDetailsPage from "./pages/RepoDetailsPage";
 import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -133,6 +135,16 @@ const workflowsRoute = createRoute({
   path: "/workflows",
   component: WorkflowsPage,
 });
+const commitMsgRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/commit-msg",
+  component: CommitMessagePage,
+});
+const compareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/compare",
+  component: RepoComparePage,
+});
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -151,6 +163,8 @@ const routeTree = rootRoute.addChildren([
   terminalRoute,
   bridgeSetupRoute,
   workflowsRoute,
+  commitMsgRoute,
+  compareRoute,
 ]);
 
 const router = createRouter({ routeTree });

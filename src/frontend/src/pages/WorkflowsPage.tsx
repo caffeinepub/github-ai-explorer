@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -18,23 +19,31 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  AlertTriangle,
   ChevronDown,
   ChevronUp,
   CircleCheck,
   CircleDot,
   ClipboardCopy,
+  Copy,
+  Download,
+  ExternalLink,
+  FileText,
   GitFork,
   Loader2,
   Play,
   Plus,
+  Star,
   Terminal,
+  Timer,
   Trash2,
+  Upload,
   Workflow as WorkflowIcon,
   X,
   Zap,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface WorkflowStep {
@@ -44,9 +53,15 @@ interface WorkflowStep {
     | "fork_repo"
     | "generate_setup"
     | "open_terminal"
-    | "copy_text";
+    | "copy_text"
+    | "open_url"
+    | "star_repo"
+    | "create_gist"
+    | "wait_seconds"
+    | "git_clone";
   label: string;
   value: string;
+  continueOnError?: boolean;
 }
 
 interface UserWorkflow {
@@ -55,9 +70,11 @@ interface UserWorkflow {
   description: string;
   steps: WorkflowStep[];
   createdAt: number;
+  lastRunStatus?: "success" | "failed" | "partial";
+  lastRunAt?: number;
 }
 
-type StepStatus = "pending" | "running" | "done" | "error";
+type StepStatus = "pending" | "running" | "done" | "error" | "warning";
 
 interface RunState {
   stepStatuses: StepStatus[];
@@ -83,6 +100,17 @@ function saveWorkflows(workflows: UserWorkflow[]) {
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function relativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
 }
 
 const STEP_TYPES: {
@@ -120,6 +148,36 @@ const STEP_TYPES: {
     label: "Copy to Clipboard",
     placeholder: "Text to copy",
     icon: <ClipboardCopy className="w-3.5 h-3.5" />,
+  },
+  {
+    value: "open_url",
+    label: "Open URL",
+    placeholder: "https://...",
+    icon: <ExternalLink className="w-3.5 h-3.5" />,
+  },
+  {
+    value: "star_repo",
+    label: "Star Repo",
+    placeholder: "owner/repo",
+    icon: <Star className="w-3.5 h-3.5" />,
+  },
+  {
+    value: "create_gist",
+    label: "Create Gist",
+    placeholder: "Gist content text",
+    icon: <FileText className="w-3.5 h-3.5" />,
+  },
+  {
+    value: "wait_seconds",
+    label: "Wait (seconds)",
+    placeholder: "e.g. 3",
+    icon: <Timer className="w-3.5 h-3.5" />,
+  },
+  {
+    value: "git_clone",
+    label: "Git Clone",
+    placeholder: "owner/repo",
+    icon: <Download className="w-3.5 h-3.5" />,
   },
 ];
 
@@ -201,12 +259,81 @@ async function executeStep(
     }
     case "open_terminal": {
       window.location.href = "/terminal";
-      return { ok: true, message: "Navigating to terminal…" };
+      return { ok: true, message: "Navigating to terminal..." };
     }
     case "copy_text": {
       try {
         await navigator.clipboard.writeText(step.value);
         return { ok: true, message: "Copied to clipboard" };
+      } catch {
+        return { ok: false, message: "Clipboard access denied" };
+      }
+    }
+    case "open_url": {
+      window.open(step.value, "_blank");
+      return { ok: true, message: `Opened ${step.value}` };
+    }
+    case "star_repo": {
+      const pat = localStorage.getItem("githubPAT");
+      if (!pat) return { ok: false, message: "GitHub PAT not configured" };
+      try {
+        const res = await fetch(
+          `https://api.github.com/user/starred/${step.value}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${pat}`,
+              Accept: "application/vnd.github+json",
+              "Content-Length": "0",
+            },
+          },
+        );
+        if (res.status === 204)
+          return { ok: true, message: `Starred ${step.value}` };
+        return { ok: false, message: `Failed to star: HTTP ${res.status}` };
+      } catch {
+        return { ok: false, message: "GitHub API request failed" };
+      }
+    }
+    case "create_gist": {
+      const pat = localStorage.getItem("githubPAT");
+      if (!pat) return { ok: false, message: "GitHub PAT not configured" };
+      try {
+        const res = await fetch("https://api.github.com/gists", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${pat}`,
+            Accept: "application/vnd.github+json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            description: "Workflow Gist",
+            public: true,
+            files: { "gist.txt": { content: step.value || "(empty)" } },
+          }),
+        });
+        if (res.status === 201) {
+          const data = await res.json();
+          return { ok: true, message: `Gist created: ${data.html_url}` };
+        }
+        return {
+          ok: false,
+          message: `Failed to create gist: HTTP ${res.status}`,
+        };
+      } catch {
+        return { ok: false, message: "GitHub API request failed" };
+      }
+    }
+    case "wait_seconds": {
+      const secs = Number(step.value) || 1;
+      await new Promise((r) => setTimeout(r, secs * 1000));
+      return { ok: true, message: `Waited ${secs}s` };
+    }
+    case "git_clone": {
+      const cmd = `git clone https://github.com/${step.value}.git`;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        return { ok: true, message: `Copied: ${cmd}` };
       } catch {
         return { ok: false, message: "Clipboard access denied" };
       }
@@ -234,7 +361,13 @@ function BuilderModal({
   const addStep = () =>
     setSteps((prev) => [
       ...prev,
-      { id: uid(), type: "run_command", label: "New step", value: "" },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "New step",
+        value: "",
+        continueOnError: false,
+      },
     ]);
   const removeStep = (id: string) =>
     setSteps((prev) => prev.filter((s) => s.id !== id));
@@ -259,6 +392,8 @@ function BuilderModal({
       description: description.trim(),
       steps,
       createdAt: initial?.createdAt ?? Date.now(),
+      lastRunStatus: initial?.lastRunStatus,
+      lastRunAt: initial?.lastRunAt,
     });
     onClose();
   };
@@ -327,7 +462,7 @@ function BuilderModal({
               </div>
               {steps.length === 0 && (
                 <div className="py-6 text-center text-[11px] font-mono text-white/20 border border-dashed border-white/10 rounded-md">
-                  No steps yet — click “Add Step” to begin
+                  No steps yet — click "Add Step" to begin
                 </div>
               )}
               {steps.map((step, i) => {
@@ -410,6 +545,23 @@ function BuilderModal({
                         />
                       )}
                     </div>
+                    <div className="flex items-center gap-2 pl-7">
+                      <Checkbox
+                        id={`coe-${step.id}`}
+                        data-ocid="workflows.builder.step_continue_on_error.checkbox"
+                        checked={!!step.continueOnError}
+                        onCheckedChange={(checked) =>
+                          updateStep(step.id, { continueOnError: !!checked })
+                        }
+                        className="h-3.5 w-3.5 border-white/20 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                      />
+                      <label
+                        htmlFor={`coe-${step.id}`}
+                        className="text-[10px] font-mono text-white/30 cursor-pointer select-none"
+                      >
+                        Continue on error
+                      </label>
+                    </div>
                   </div>
                 );
               })}
@@ -442,7 +594,12 @@ function BuilderModal({
 function RunModal({
   workflow,
   onClose,
-}: { workflow: UserWorkflow | null; onClose: () => void }) {
+  onRunComplete,
+}: {
+  workflow: UserWorkflow | null;
+  onClose: () => void;
+  onRunComplete: (id: string, status: "success" | "failed" | "partial") => void;
+}) {
   const [runState, setRunState] = useState<RunState | null>(null);
   const [started, setStarted] = useState(false);
 
@@ -451,8 +608,11 @@ function RunModal({
     setStarted(true);
     const statuses: StepStatus[] = workflow.steps.map(() => "pending");
     const messages: string[] = workflow.steps.map(() => "");
+    let hadError = false;
+    let hadWarning = false;
 
     for (let i = 0; i < workflow.steps.length; i++) {
+      const step = workflow.steps[i];
       statuses[i] = "running";
       setRunState({
         stepStatuses: [...statuses],
@@ -460,27 +620,45 @@ function RunModal({
         currentStep: i,
         finished: false,
       });
-      const result = await executeStep(workflow.steps[i]);
-      statuses[i] = result.ok ? "done" : "error";
+      const result = await executeStep(step);
+      if (!result.ok) {
+        if (step.continueOnError) {
+          statuses[i] = "warning";
+          hadWarning = true;
+        } else {
+          statuses[i] = "error";
+          hadError = true;
+        }
+      } else {
+        statuses[i] = "done";
+      }
       messages[i] = result.message;
       setRunState({
         stepStatuses: [...statuses],
         stepMessages: [...messages],
         currentStep: i,
-        finished: !result.ok,
+        finished: hadError,
       });
-      if (!result.ok) {
+      if (hadError) {
         toast.error(`Step ${i + 1} failed: ${result.message}`);
+        onRunComplete(workflow.id, "failed");
         return;
       }
     }
+
+    const finalStatus = hadWarning ? "partial" : "success";
     setRunState({
       stepStatuses: [...statuses],
       stepMessages: [...messages],
       currentStep: workflow.steps.length - 1,
       finished: true,
     });
-    toast.success("Workflow completed!");
+    onRunComplete(workflow.id, finalStatus);
+    if (finalStatus === "partial") {
+      toast.warning("Workflow completed with warnings");
+    } else {
+      toast.success("Workflow completed!");
+    }
   };
 
   const handleClose = () => {
@@ -497,6 +675,8 @@ function RunModal({
         return <CircleCheck className="w-3.5 h-3.5 text-[#4ade80]" />;
       case "error":
         return <X className="w-3.5 h-3.5 text-red-400" />;
+      case "warning":
+        return <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />;
       default:
         return <CircleDot className="w-3.5 h-3.5 text-white/20" />;
     }
@@ -522,13 +702,28 @@ function RunModal({
             return (
               <div
                 key={step.id}
-                className={`flex items-start gap-3 p-2.5 rounded-md border text-[11px] font-mono transition-colors ${status === "running" ? "border-blue-400/30 bg-blue-400/5" : status === "done" ? "border-[#4ade80]/20 bg-[#4ade80]/5" : status === "error" ? "border-red-400/30 bg-red-400/5" : "border-white/10 bg-black/20"}`}
+                className={`flex items-start gap-3 p-2.5 rounded-md border text-[11px] font-mono transition-colors ${
+                  status === "running"
+                    ? "border-blue-400/30 bg-blue-400/5"
+                    : status === "done"
+                      ? "border-[#4ade80]/20 bg-[#4ade80]/5"
+                      : status === "error"
+                        ? "border-red-400/30 bg-red-400/5"
+                        : status === "warning"
+                          ? "border-amber-400/30 bg-amber-400/5"
+                          : "border-white/10 bg-black/20"
+                }`}
               >
                 <div className="mt-0.5 shrink-0">{statusIcon(status)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
                     {meta.icon}
                     <span className="text-white/70">{step.label}</span>
+                    {step.continueOnError && (
+                      <span className="text-[9px] font-mono text-amber-400/60 border border-amber-400/20 px-1 rounded">
+                        skip on err
+                      </span>
+                    )}
                   </div>
                   {step.value && step.type !== "open_terminal" && (
                     <code className="text-[10px] text-white/30 truncate block">
@@ -537,7 +732,13 @@ function RunModal({
                   )}
                   {message && (
                     <p
-                      className={`mt-0.5 text-[10px] ${status === "error" ? "text-red-400" : "text-[#4ade80]/70"}`}
+                      className={`mt-0.5 text-[10px] ${
+                        status === "error"
+                          ? "text-red-400"
+                          : status === "warning"
+                            ? "text-amber-400"
+                            : "text-[#4ade80]/70"
+                      }`}
                     >
                       {message}
                     </p>
@@ -548,7 +749,7 @@ function RunModal({
           })}
           {runState?.finished && (
             <div className="text-center text-[11px] font-mono text-[#4ade80] py-2">
-              ✓ All steps completed successfully
+              All steps completed
             </div>
           )}
         </div>
@@ -582,6 +783,7 @@ export default function WorkflowsPage() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserWorkflow | undefined>();
   const [runTarget, setRunTarget] = useState<UserWorkflow | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const persist = (updated: UserWorkflow[]) => {
     setWorkflows(updated);
@@ -602,13 +804,103 @@ export default function WorkflowsPage() {
     persist(workflows.filter((w) => w.id !== id));
     toast.success("Workflow deleted");
   };
+
   const handleEdit = (w: UserWorkflow) => {
     setEditTarget(w);
     setBuilderOpen(true);
   };
+
   const handleBuilderClose = () => {
     setBuilderOpen(false);
     setEditTarget(undefined);
+  };
+
+  const handleDuplicate = (w: UserWorkflow) => {
+    const copy: UserWorkflow = {
+      ...w,
+      id: uid(),
+      name: `Copy of ${w.name}`,
+      createdAt: Date.now(),
+      lastRunStatus: undefined,
+      lastRunAt: undefined,
+    };
+    persist([...workflows, copy]);
+    toast.success("Workflow duplicated");
+  };
+
+  const handleRunComplete = (
+    id: string,
+    status: "success" | "failed" | "partial",
+  ) => {
+    const updated = workflows.map((w) =>
+      w.id === id ? { ...w, lastRunStatus: status, lastRunAt: Date.now() } : w,
+    );
+    persist(updated);
+  };
+
+  const handleExportAll = () => {
+    const blob = new Blob([JSON.stringify(workflows, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "workflows-export.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(
+      `Exported ${workflows.length} workflow${workflows.length !== 1 ? "s" : ""}`,
+    );
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported: UserWorkflow[] = JSON.parse(
+          ev.target?.result as string,
+        );
+        if (!Array.isArray(imported)) throw new Error("Not an array");
+        const existingIds = new Set(workflows.map((w) => w.id));
+        const newOnes = imported.filter((w) => !existingIds.has(w.id));
+        persist([...workflows, ...newOnes]);
+        toast.success(
+          newOnes.length === 0
+            ? "No new workflows to import (all duplicates)"
+            : `Imported ${newOnes.length} workflow${newOnes.length !== 1 ? "s" : ""}`,
+        );
+      } catch {
+        toast.error("Invalid workflows JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const lastRunBadge = (w: UserWorkflow) => {
+    if (!w.lastRunStatus || !w.lastRunAt) return null;
+    const time = relativeTime(w.lastRunAt);
+    if (w.lastRunStatus === "success") {
+      return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/20 px-1.5 py-0.5 rounded">
+          ✓ Last run passed · {time}
+        </span>
+      );
+    }
+    if (w.lastRunStatus === "failed") {
+      return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-red-400 bg-red-400/10 border border-red-400/20 px-1.5 py-0.5 rounded">
+          ✗ Last run failed · {time}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded">
+        ⚠ Partial · {time}
+      </span>
+    );
   };
 
   return (
@@ -617,7 +909,7 @@ export default function WorkflowsPage() {
       className="min-h-screen bg-[#0d1117] text-white px-4 sm:px-6 lg:px-8 py-8"
     >
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-mono font-bold text-white flex items-center gap-3">
               <WorkflowIcon className="w-6 h-6 text-[#4ade80]" />
@@ -628,17 +920,47 @@ export default function WorkflowsPage() {
               scripts, and more.
             </p>
           </div>
-          <Button
-            data-ocid="workflows.new_button"
-            onClick={() => {
-              setEditTarget(undefined);
-              setBuilderOpen(true);
-            }}
-            className="gap-2 font-mono text-sm bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80] shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            New Workflow
-          </Button>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <Button
+              data-ocid="workflows.export_all.button"
+              variant="ghost"
+              size="sm"
+              onClick={handleExportAll}
+              disabled={workflows.length === 0}
+              className="h-8 gap-1.5 text-[11px] font-mono text-white/40 hover:text-white hover:bg-white/10 border border-white/10"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export All
+            </Button>
+            <Button
+              data-ocid="workflows.import.button"
+              variant="ghost"
+              size="sm"
+              onClick={() => importInputRef.current?.click()}
+              className="h-8 gap-1.5 text-[11px] font-mono text-white/40 hover:text-white hover:bg-white/10 border border-white/10"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Import
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleImportFile}
+              className="hidden"
+            />
+            <Button
+              data-ocid="workflows.new_button"
+              onClick={() => {
+                setEditTarget(undefined);
+                setBuilderOpen(true);
+              }}
+              className="gap-2 font-mono text-sm bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80]"
+            >
+              <Plus className="w-4 h-4" />
+              New Workflow
+            </Button>
+          </div>
         </div>
 
         {workflows.length === 0 ? (
@@ -680,6 +1002,7 @@ export default function WorkflowsPage() {
                         {workflow.steps.length}{" "}
                         {workflow.steps.length === 1 ? "step" : "steps"}
                       </Badge>
+                      {lastRunBadge(workflow)}
                     </div>
                     {workflow.description && (
                       <p className="mt-1 text-xs text-white/40 font-mono line-clamp-1">
@@ -720,6 +1043,16 @@ export default function WorkflowsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      data-ocid={`workflows.duplicate_button.${index + 1}`}
+                      onClick={() => handleDuplicate(workflow)}
+                      title="Duplicate workflow"
+                      className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       data-ocid={`workflows.edit_button.${index + 1}`}
                       onClick={() => handleEdit(workflow)}
                       className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
@@ -749,7 +1082,11 @@ export default function WorkflowsPage() {
         initial={editTarget}
         onSave={handleSave}
       />
-      <RunModal workflow={runTarget} onClose={() => setRunTarget(null)} />
+      <RunModal
+        workflow={runTarget}
+        onClose={() => setRunTarget(null)}
+        onRunComplete={handleRunComplete}
+      />
     </div>
   );
 }
