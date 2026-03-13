@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bot,
+  Code,
   Download,
   FolderOpen,
   GitBranch,
@@ -28,6 +29,7 @@ import {
 import { makeOutputLine, useTerminalState } from "../hooks/useTerminalState";
 
 import { AIAssistantPanel } from "../components/Terminal/AIAssistantPanel";
+import { AIPairProgrammerPanel } from "../components/Terminal/AIPairProgrammerPanel";
 import { BridgeStatusIndicator } from "../components/Terminal/BridgeStatusIndicator";
 import { CommandPalette } from "../components/Terminal/CommandPalette";
 import { FileBrowserPanel } from "../components/Terminal/FileBrowserPanel";
@@ -66,6 +68,7 @@ export default function TerminalPage() {
   const isConnected = bridgeStatus === "connected";
 
   const [showAI, setShowAI] = useState(false);
+  const [showPair, setShowPair] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
   const [lastFailedCommand, setLastFailedCommand] = useState<{
@@ -74,7 +77,6 @@ export default function TerminalPage() {
     exitCode: number;
   } | null>(null);
 
-  // Repo context for AI
   const { repoContext, setRepoContext, clearRepoContext } = useRepoContext();
   const [pinPopoverOpen, setPinPopoverOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -86,13 +88,11 @@ export default function TerminalPage() {
   );
   const abortRef = useRef<AbortController | null>(null);
 
-  // ── Backend session persistence ──────────────────────────────────────────
   const { data: backendSessions, isFetched: sessionsFetched } =
     useLoadTerminalSessions();
   const saveSessionMutation = useSaveTerminalSession();
   const restoredRef = useRef(false);
 
-  // Auto-restore sessions once after login
   useEffect(() => {
     if (!isAuthenticated) {
       restoredRef.current = false;
@@ -109,7 +109,6 @@ export default function TerminalPage() {
     loadSessionsFromBackend,
   ]);
 
-  // Auto-save active tab to backend after each command (debounced)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSaveSession = useCallback(() => {
     if (!isAuthenticated || !activeTab) return;
@@ -134,13 +133,11 @@ export default function TerminalPage() {
     }, 1500);
   }, [isAuthenticated, activeTab, identity, saveSessionMutation]);
 
-  // ── Pin repo handler ──────────────────────────────────────────────────────
   const handlePinRepo = useCallback(async () => {
     const trimmed = pinInput.trim();
     if (!trimmed || !trimmed.includes("/")) return;
     const [owner, name] = trimmed.split("/");
     if (!owner || !name) return;
-
     setPinLoading(true);
     try {
       const pat = localStorage.getItem("githubPAT");
@@ -148,7 +145,6 @@ export default function TerminalPage() {
         Accept: "application/vnd.github+json",
       };
       if (pat) headers.Authorization = `Bearer ${pat}`;
-
       const res = await fetch(`https://api.github.com/repos/${owner}/${name}`, {
         headers,
       });
@@ -162,7 +158,6 @@ export default function TerminalPage() {
           topics: data.topics ?? [],
         });
       } else {
-        // Pin without language info
         setRepoContext({
           owner,
           name,
@@ -186,21 +181,16 @@ export default function TerminalPage() {
     }
   }, [pinInput, setRepoContext]);
 
-  // ── Command runner ───────────────────────────────────────────────────────
   const runCommand = useCallback(
     async (command: string) => {
       if (!activeTab) return;
       const tabId = activeTab.id;
-
-      // Handle built-in commands
       if (command === "clear") {
         clearOutput(tabId);
         return;
       }
-
       addToHistory(tabId, command);
       appendOutput(tabId, makeOutputLine(command, "command"));
-
       if (!isConnected) {
         appendOutput(
           tabId,
@@ -209,30 +199,24 @@ export default function TerminalPage() {
             "error",
           ),
         );
-        // Still auto-save even when bridge is not connected
         autoSaveSession();
         return;
       }
-
       setTabRunning(tabId, true);
       setLastFailedCommand(null);
-
       try {
         abortRef.current = new AbortController();
-
-        // Use streaming for long-running commands
         const longRunning =
           /^(npm|yarn|pnpm|pip|cargo|make|docker|kubectl|watch|tail|ping|top|htop|python|node|ruby|go run)/i.test(
             command,
           );
-
         if (longRunning) {
           await streamCommand(
             command,
             (line) => appendOutput(tabId, makeOutputLine(line, "output")),
             (exitCode) => {
               setTabRunning(tabId, false);
-              if (exitCode !== 0) {
+              if (exitCode !== 0)
                 appendOutput(
                   tabId,
                   makeOutputLine(
@@ -240,14 +224,12 @@ export default function TerminalPage() {
                     "error",
                   ),
                 );
-              }
               autoSaveSession();
             },
             abortRef.current.signal,
           );
         } else {
           const result = await executeCommand(command);
-
           if (result.stdout) {
             for (const line of result.stdout.split("\n")) {
               if (line) appendOutput(tabId, makeOutputLine(line, "output"));
@@ -258,7 +240,6 @@ export default function TerminalPage() {
               if (line) appendOutput(tabId, makeOutputLine(line, "error"));
             }
           }
-
           if (result.exitCode !== 0) {
             setLastFailedCommand({
               command,
@@ -266,13 +247,9 @@ export default function TerminalPage() {
               exitCode: result.exitCode,
             });
           }
-
-          // Update working directory if cd command
           if (command.startsWith("cd ") && result.exitCode === 0) {
-            const newDir = command.slice(3).trim();
-            setWorkingDirectory(tabId, newDir || "~");
+            setWorkingDirectory(tabId, command.slice(3).trim() || "~");
           }
-
           autoSaveSession();
         }
       } catch (err: unknown) {
@@ -299,7 +276,6 @@ export default function TerminalPage() {
     palette.close();
     runCommand(command);
   };
-
   const handleOpenInTerminal = (path: string) => {
     runCommand(`cd ${path}`);
   };
@@ -328,28 +304,19 @@ export default function TerminalPage() {
               variant="ghost"
               size="sm"
               onClick={() => setShowFiles(!showFiles)}
-              className={`h-7 gap-1.5 text-xs font-mono ${
-                showFiles
-                  ? "text-yellow-400 bg-yellow-400/10"
-                  : "text-white/50 hover:text-white hover:bg-white/10"
-              }`}
+              className={`h-7 gap-1.5 text-xs font-mono ${showFiles ? "text-yellow-400 bg-yellow-400/10" : "text-white/50 hover:text-white hover:bg-white/10"}`}
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Files</span>
             </Button>
 
-            {/* Pin Repo button */}
             <Popover open={pinPopoverOpen} onOpenChange={setPinPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   data-ocid="terminal.pin_repo.button"
-                  className={`h-7 gap-1.5 text-xs font-mono relative ${
-                    repoContext
-                      ? "text-neon-green bg-neon-green/10"
-                      : "text-white/50 hover:text-white hover:bg-white/10"
-                  }`}
+                  className={`h-7 gap-1.5 text-xs font-mono relative ${repoContext ? "text-neon-green bg-neon-green/10" : "text-white/50 hover:text-white hover:bg-white/10"}`}
                 >
                   <GitBranch className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Pin Repo</span>
@@ -407,12 +374,11 @@ export default function TerminalPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowAI(!showAI)}
-              className={`h-7 gap-1.5 text-xs font-mono relative ${
-                showAI
-                  ? "text-neon-green bg-neon-green/10"
-                  : "text-white/50 hover:text-white hover:bg-white/10"
-              }`}
+              onClick={() => {
+                setShowAI(!showAI);
+                if (showPair) setShowPair(false);
+              }}
+              className={`h-7 gap-1.5 text-xs font-mono relative ${showAI ? "text-neon-green bg-neon-green/10" : "text-white/50 hover:text-white hover:bg-white/10"}`}
             >
               <Bot className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">AI</span>
@@ -420,6 +386,20 @@ export default function TerminalPage() {
                 <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-green-400" />
               )}
             </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowPair(!showPair);
+                if (showAI) setShowAI(false);
+              }}
+              className={`h-7 gap-1.5 text-xs font-mono ${showPair ? "text-blue-400 bg-blue-400/10" : "text-white/50 hover:text-white hover:bg-white/10"}`}
+            >
+              <Code className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Pair</span>
+            </Button>
+
             <Button
               variant="ghost"
               size="sm"
@@ -462,7 +442,6 @@ export default function TerminalPage() {
           </div>
         </div>
 
-        {/* Tabs */}
         <TerminalTabs
           tabs={tabs}
           activeTabIndex={activeTabIndex}
@@ -472,9 +451,7 @@ export default function TerminalPage() {
           onRename={renameTab}
         />
 
-        {/* Main area */}
         <div className="flex flex-1 overflow-hidden">
-          {/* File browser */}
           {showFiles && (
             <FileBrowserPanel
               bridgeConnected={isConnected}
@@ -483,7 +460,6 @@ export default function TerminalPage() {
             />
           )}
 
-          {/* Terminal viewport */}
           {activeTab && (
             <TerminalViewport
               tab={activeTab}
@@ -494,7 +470,6 @@ export default function TerminalPage() {
             />
           )}
 
-          {/* AI panel */}
           {showAI && (
             <AIAssistantPanel
               isOpen={showAI}
@@ -506,9 +481,17 @@ export default function TerminalPage() {
               onUnpinRepo={clearRepoContext}
             />
           )}
+
+          {showPair && (
+            <AIPairProgrammerPanel
+              isOpen={showPair}
+              onClose={() => setShowPair(false)}
+              onRunCommand={runCommand}
+              repoContext={repoContext}
+            />
+          )}
         </div>
 
-        {/* Session manager dialog */}
         {activeTab && (
           <SessionManager
             open={showSessions}
@@ -518,7 +501,6 @@ export default function TerminalPage() {
           />
         )}
 
-        {/* Command palette */}
         <CommandPalette
           isOpen={palette.isOpen}
           query={palette.query}

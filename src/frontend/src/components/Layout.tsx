@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
   Bookmark,
+  GitBranch,
   Heart,
   Key,
   LogIn,
@@ -81,7 +82,6 @@ export default function Layout() {
   const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
   const themeLabel =
     theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
-
   const displayName = userProfile?.name || "Account";
   const initials = userProfile?.name ? getInitials(userProfile.name) : "?";
 
@@ -90,7 +90,6 @@ export default function Layout() {
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
               <img
                 src="/assets/generated/repo-radar-logo.dim_128x128.png"
@@ -105,7 +104,6 @@ export default function Layout() {
               </span>
             </Link>
 
-            {/* Nav */}
             <nav className="hidden md:flex items-center gap-1">
               <Link
                 to="/search"
@@ -128,9 +126,16 @@ export default function Layout() {
                 <Bookmark className="w-4 h-4" />
                 Bookmarks
               </Link>
+              <Link
+                to="/workflows"
+                data-ocid="nav.workflows.link"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <GitBranch className="w-4 h-4" />
+                Workflows
+              </Link>
             </nav>
 
-            {/* Auth */}
             <div className="flex items-center gap-2">
               {isAuthenticated ? (
                 <DropdownMenu>
@@ -227,7 +232,6 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Mobile nav */}
           <div className="flex md:hidden items-center gap-1 pb-2 overflow-x-auto">
             <Link
               to="/search"
@@ -249,6 +253,14 @@ export default function Layout() {
             >
               <Bookmark className="w-3.5 h-3.5" />
               Bookmarks
+            </Link>
+            <Link
+              to="/workflows"
+              data-ocid="nav.workflows.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <GitBranch className="w-3.5 h-3.5" />
+              Workflows
             </Link>
           </div>
         </div>
