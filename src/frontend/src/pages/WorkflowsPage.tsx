@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -30,6 +31,7 @@ import {
   ExternalLink,
   FileText,
   GitFork,
+  Layers,
   Loader2,
   Play,
   Plus,
@@ -81,6 +83,10 @@ interface RunState {
   stepMessages: string[];
   currentStep: number;
   finished: boolean;
+}
+
+interface QuickRunEntry extends RunState {
+  running: boolean;
 }
 
 const STORAGE_KEY = "github-explorer-workflows";
@@ -184,6 +190,194 @@ const STEP_TYPES: {
 function stepTypeMeta(type: WorkflowStep["type"]) {
   return STEP_TYPES.find((s) => s.value === type) ?? STEP_TYPES[0];
 }
+
+// ── Preset Workflows ──────────────────────────────────────────────────────────
+const PRESET_WORKFLOWS: Omit<UserWorkflow, "lastRunStatus" | "lastRunAt">[] = [
+  {
+    id: "preset-1",
+    name: "Fork & Setup",
+    description: "Fork a repo and auto-generate its setup script.",
+    createdAt: 0,
+    steps: [
+      { id: uid(), type: "fork_repo", label: "Fork Repo", value: "owner/repo" },
+      {
+        id: uid(),
+        type: "generate_setup",
+        label: "Generate Setup Script",
+        value: "owner/repo",
+      },
+      { id: uid(), type: "open_terminal", label: "Open Terminal", value: "" },
+    ],
+  },
+  {
+    id: "preset-2",
+    name: "Clone & Install (Node)",
+    description: "Clone a repo and run npm install.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "git_clone",
+        label: "Git Clone",
+        value: "owner/repo",
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "npm install",
+        value: "npm install",
+      },
+      { id: uid(), type: "open_terminal", label: "Open Terminal", value: "" },
+    ],
+  },
+  {
+    id: "preset-3",
+    name: "Clone & Install (Python)",
+    description: "Clone a Python repo and install dependencies.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "git_clone",
+        label: "Git Clone",
+        value: "owner/repo",
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "pip install",
+        value: "pip install -r requirements.txt",
+      },
+      { id: uid(), type: "open_terminal", label: "Open Terminal", value: "" },
+    ],
+  },
+  {
+    id: "preset-4",
+    name: "Docker Dev Environment",
+    description: "Pull and spin up a Docker Compose dev environment.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "run_command",
+        label: "docker-compose pull",
+        value: "docker-compose pull",
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "docker-compose up -d",
+        value: "docker-compose up -d",
+      },
+      {
+        id: uid(),
+        type: "open_url",
+        label: "Open localhost:3000",
+        value: "http://localhost:3000",
+      },
+    ],
+  },
+  {
+    id: "preset-5",
+    name: "New Node Project",
+    description: "Scaffold a new Node.js project.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "run_command",
+        label: "Init project",
+        value: "mkdir my-project && cd my-project && npm init -y",
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "Install Express",
+        value: "npm install express",
+      },
+      { id: uid(), type: "open_terminal", label: "Open Terminal", value: "" },
+    ],
+  },
+  {
+    id: "preset-6",
+    name: "Git Commit & Push",
+    description: "Stage, commit, and push all changes.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "run_command",
+        label: "git add",
+        value: "git add .",
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "git commit",
+        value: 'git commit -m "chore: update"',
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "git push",
+        value: "git push",
+      },
+    ],
+  },
+  {
+    id: "preset-7",
+    name: "Star & Clone Repo",
+    description: "Star a repo and clone it locally.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "star_repo",
+        label: "Star Repo",
+        value: "owner/repo",
+      },
+      {
+        id: uid(),
+        type: "git_clone",
+        label: "Git Clone",
+        value: "owner/repo",
+      },
+      {
+        id: uid(),
+        type: "copy_text",
+        label: "Copy clone command",
+        value: "git clone https://github.com/owner/repo.git",
+      },
+    ],
+  },
+  {
+    id: "preset-8",
+    name: "Security Audit",
+    description: "Run npm audit, fix vulnerabilities, and review changes.",
+    createdAt: 0,
+    steps: [
+      {
+        id: uid(),
+        type: "run_command",
+        label: "npm audit",
+        value: "npm audit",
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "npm audit fix",
+        value: "npm audit fix",
+        continueOnError: true,
+      },
+      {
+        id: uid(),
+        type: "run_command",
+        label: "git diff --stat",
+        value: "git diff --stat",
+      },
+    ],
+  },
+];
 
 async function executeStep(
   step: WorkflowStep,
@@ -778,11 +972,113 @@ function RunModal({
   );
 }
 
+// ── Inline step status icon (compact, for quick-run panel) ────────────────────
+function InlineStepIcon({ status }: { status: StepStatus }) {
+  switch (status) {
+    case "running":
+      return (
+        <Loader2 className="w-3 h-3 animate-spin text-blue-400 shrink-0" />
+      );
+    case "done":
+      return <CircleCheck className="w-3 h-3 text-[#4ade80] shrink-0" />;
+    case "error":
+      return <X className="w-3 h-3 text-red-400 shrink-0" />;
+    case "warning":
+      return <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />;
+    default:
+      return <CircleDot className="w-3 h-3 text-white/20 shrink-0" />;
+  }
+}
+
+// ── Preset Modal ─────────────────────────────────────────────────────────────
+function PresetModal({
+  open,
+  onClose,
+  onUsePreset,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onUsePreset: (preset: (typeof PRESET_WORKFLOWS)[number]) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent
+        data-ocid="workflows.preset_modal.dialog"
+        className="max-w-2xl bg-[#0d1117] border border-white/10 text-white p-0 gap-0 overflow-hidden"
+      >
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-white/10">
+          <DialogTitle className="font-mono text-sm text-white/90 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#4ade80]" />
+            Workflow Presets
+          </DialogTitle>
+          <p className="text-[11px] font-mono text-white/40 mt-1">
+            Pick a preset to get started — you can edit it after adding.
+          </p>
+        </DialogHeader>
+        <ScrollArea className="max-h-[70vh]">
+          <div className="p-5 grid grid-cols-1 gap-3">
+            {PRESET_WORKFLOWS.map((preset, index) => (
+              <div
+                key={preset.id}
+                className="bg-black/20 border border-white/10 hover:border-white/20 rounded-xl p-4 transition-colors group"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="font-mono font-semibold text-white/90 text-sm">
+                        {preset.name}
+                      </span>
+                      <Badge className="text-[10px] font-mono bg-white/5 text-white/40 border-white/10">
+                        {preset.steps.length}{" "}
+                        {preset.steps.length === 1 ? "step" : "steps"}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] font-mono text-white/40 mb-2">
+                      {preset.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {preset.steps.map((step) => {
+                        const meta = stepTypeMeta(step.type);
+                        return (
+                          <span
+                            key={step.id}
+                            className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border bg-white/5 text-white/30 border-white/5"
+                          >
+                            {meta.icon}
+                            {step.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    data-ocid={`workflows.preset.${index + 1}.button`}
+                    onClick={() => onUsePreset(preset)}
+                    className="shrink-0 h-8 gap-1.5 text-[11px] font-mono bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80]"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Use Preset
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function WorkflowsPage() {
   const [workflows, setWorkflows] = useState<UserWorkflow[]>(loadWorkflows);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserWorkflow | undefined>();
   const [runTarget, setRunTarget] = useState<UserWorkflow | null>(null);
+  const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [quickRunState, setQuickRunState] = useState<
+    Record<string, QuickRunEntry>
+  >({});
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const persist = (updated: UserWorkflow[]) => {
@@ -838,6 +1134,125 @@ export default function WorkflowsPage() {
     persist(updated);
   };
 
+  const handleUsePreset = (preset: (typeof PRESET_WORKFLOWS)[number]) => {
+    const freshWorkflow: UserWorkflow = {
+      id: uid(),
+      name: preset.name,
+      description: preset.description,
+      createdAt: Date.now(),
+      steps: preset.steps.map((step) => ({ ...step, id: uid() })),
+    };
+    handleSave(freshWorkflow);
+    setPresetModalOpen(false);
+    toast.success("Preset added — you can edit it before running");
+  };
+
+  const handleQuickRun = async (workflow: UserWorkflow) => {
+    if (workflow.steps.length === 0) return;
+
+    const initStatuses: StepStatus[] = workflow.steps.map(() => "pending");
+    const initMessages: string[] = workflow.steps.map(() => "");
+
+    setQuickRunState((prev) => ({
+      ...prev,
+      [workflow.id]: {
+        running: true,
+        stepStatuses: initStatuses,
+        stepMessages: initMessages,
+        currentStep: 0,
+        finished: false,
+      },
+    }));
+
+    const statuses: StepStatus[] = [...initStatuses];
+    const messages: string[] = [...initMessages];
+    let hadError = false;
+    let hadWarning = false;
+
+    for (let i = 0; i < workflow.steps.length; i++) {
+      const step = workflow.steps[i];
+      statuses[i] = "running";
+      setQuickRunState((prev) => ({
+        ...prev,
+        [workflow.id]: {
+          running: true,
+          stepStatuses: [...statuses],
+          stepMessages: [...messages],
+          currentStep: i,
+          finished: false,
+        },
+      }));
+
+      const result = await executeStep(step);
+
+      if (!result.ok) {
+        if (step.continueOnError) {
+          statuses[i] = "warning";
+          hadWarning = true;
+        } else {
+          statuses[i] = "error";
+          hadError = true;
+        }
+      } else {
+        statuses[i] = "done";
+      }
+      messages[i] = result.message;
+
+      setQuickRunState((prev) => ({
+        ...prev,
+        [workflow.id]: {
+          running: !hadError,
+          stepStatuses: [...statuses],
+          stepMessages: [...messages],
+          currentStep: i,
+          finished: hadError,
+        },
+      }));
+
+      if (hadError) {
+        toast.error(`⚡ Quick Run failed at step ${i + 1}: ${result.message}`);
+        handleRunComplete(workflow.id, "failed");
+        setTimeout(() => {
+          setQuickRunState((prev) => {
+            const next = { ...prev };
+            delete next[workflow.id];
+            return next;
+          });
+        }, 3000);
+        return;
+      }
+    }
+
+    const finalStatus = hadWarning ? "partial" : "success";
+
+    setQuickRunState((prev) => ({
+      ...prev,
+      [workflow.id]: {
+        running: false,
+        stepStatuses: [...statuses],
+        stepMessages: [...messages],
+        currentStep: workflow.steps.length - 1,
+        finished: true,
+      },
+    }));
+
+    handleRunComplete(workflow.id, finalStatus);
+
+    if (finalStatus === "partial") {
+      toast.warning(`⚡ "${workflow.name}" completed with warnings`);
+    } else {
+      toast.success(`⚡ "${workflow.name}" completed successfully!`);
+    }
+
+    setTimeout(() => {
+      setQuickRunState((prev) => {
+        const next = { ...prev };
+        delete next[workflow.id];
+        return next;
+      });
+    }, 3000);
+  };
+
   const handleExportAll = () => {
     const blob = new Blob([JSON.stringify(workflows, null, 2)], {
       type: "application/json",
@@ -849,7 +1264,9 @@ export default function WorkflowsPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(
-      `Exported ${workflows.length} workflow${workflows.length !== 1 ? "s" : ""}`,
+      `Exported ${workflows.length} workflow${
+        workflows.length !== 1 ? "s" : ""
+      }`,
     );
   };
 
@@ -869,7 +1286,9 @@ export default function WorkflowsPage() {
         toast.success(
           newOnes.length === 0
             ? "No new workflows to import (all duplicates)"
-            : `Imported ${newOnes.length} workflow${newOnes.length !== 1 ? "s" : ""}`,
+            : `Imported ${newOnes.length} workflow${
+                newOnes.length !== 1 ? "s" : ""
+              }`,
         );
       } catch {
         toast.error("Invalid workflows JSON file");
@@ -950,6 +1369,16 @@ export default function WorkflowsPage() {
               className="hidden"
             />
             <Button
+              data-ocid="workflows.load_preset.button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setPresetModalOpen(true)}
+              className="h-8 gap-1.5 text-[11px] font-mono text-white/60 hover:text-white hover:bg-white/10 border border-white/20"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              Load Preset
+            </Button>
+            <Button
               data-ocid="workflows.new_button"
               onClick={() => {
                 setEditTarget(undefined);
@@ -976,102 +1405,207 @@ export default function WorkflowsPage() {
               Create your first workflow to automate repetitive dev tasks like
               cloning, forking, and setting up projects.
             </p>
-            <Button
-              onClick={() => setBuilderOpen(true)}
-              className="mt-6 gap-2 font-mono text-sm bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80]"
-            >
-              <Plus className="w-4 h-4" />
-              Create First Workflow
-            </Button>
+            <div className="flex items-center gap-3 mt-6">
+              <Button
+                onClick={() => setPresetModalOpen(true)}
+                variant="ghost"
+                className="gap-2 font-mono text-sm text-white/50 hover:text-white border border-white/20 hover:bg-white/10"
+              >
+                <Layers className="w-4 h-4" />
+                Browse Presets
+              </Button>
+              <Button
+                onClick={() => setBuilderOpen(true)}
+                className="gap-2 font-mono text-sm bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80]"
+              >
+                <Plus className="w-4 h-4" />
+                Create First Workflow
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
-            {workflows.map((workflow, index) => (
-              <div
-                key={workflow.id}
-                data-ocid={`workflows.item.${index + 1}`}
-                className="bg-black/20 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-mono font-semibold text-white/90 text-sm">
-                        {workflow.name}
-                      </h3>
-                      <Badge className="text-[10px] font-mono bg-white/5 text-white/40 border-white/10">
-                        {workflow.steps.length}{" "}
-                        {workflow.steps.length === 1 ? "step" : "steps"}
-                      </Badge>
-                      {lastRunBadge(workflow)}
-                    </div>
-                    {workflow.description && (
-                      <p className="mt-1 text-xs text-white/40 font-mono line-clamp-1">
-                        {workflow.description}
-                      </p>
-                    )}
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {workflow.steps.slice(0, 4).map((step) => {
-                        const meta = stepTypeMeta(step.type);
-                        return (
-                          <span
-                            key={step.id}
-                            className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-white/30 border border-white/5"
-                          >
-                            {meta.icon}
-                            {step.label}
+            {workflows.map((workflow, index) => {
+              const qrs = quickRunState[workflow.id];
+              const isQuickRunning = !!qrs?.running;
+              const doneCount = qrs
+                ? qrs.stepStatuses.filter(
+                    (s) => s === "done" || s === "warning",
+                  ).length
+                : 0;
+              const progressPct = workflow.steps.length
+                ? Math.round((doneCount / workflow.steps.length) * 100)
+                : 0;
+
+              return (
+                <div
+                  key={workflow.id}
+                  data-ocid={`workflows.item.${index + 1}`}
+                  className={`bg-black/20 border rounded-xl p-4 transition-colors ${
+                    isQuickRunning
+                      ? "border-[#4ade80]/30 shadow-[0_0_12px_rgba(74,222,128,0.06)]"
+                      : "border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-mono font-semibold text-white/90 text-sm">
+                          {workflow.name}
+                        </h3>
+                        <Badge className="text-[10px] font-mono bg-white/5 text-white/40 border-white/10">
+                          {workflow.steps.length}{" "}
+                          {workflow.steps.length === 1 ? "step" : "steps"}
+                        </Badge>
+                        {!qrs && lastRunBadge(workflow)}
+                      </div>
+                      {workflow.description && (
+                        <p className="mt-1 text-xs text-white/40 font-mono line-clamp-1">
+                          {workflow.description}
+                        </p>
+                      )}
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {workflow.steps.slice(0, 4).map((step, si) => {
+                          const meta = stepTypeMeta(step.type);
+                          const stepStatus = qrs?.stepStatuses[si];
+                          return (
+                            <span
+                              key={step.id}
+                              className={`inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border transition-colors ${
+                                stepStatus === "running"
+                                  ? "bg-blue-400/10 text-blue-300 border-blue-400/20"
+                                  : stepStatus === "done"
+                                    ? "bg-[#4ade80]/10 text-[#4ade80] border-[#4ade80]/20"
+                                    : stepStatus === "error"
+                                      ? "bg-red-400/10 text-red-400 border-red-400/20"
+                                      : stepStatus === "warning"
+                                        ? "bg-amber-400/10 text-amber-400 border-amber-400/20"
+                                        : "bg-white/5 text-white/30 border-white/5"
+                              }`}
+                            >
+                              {stepStatus ? (
+                                <InlineStepIcon status={stepStatus} />
+                              ) : (
+                                meta.icon
+                              )}
+                              {step.label}
+                            </span>
+                          );
+                        })}
+                        {workflow.steps.length > 4 && (
+                          <span className="text-[10px] font-mono text-white/20">
+                            +{workflow.steps.length - 4} more
                           </span>
-                        );
-                      })}
-                      {workflow.steps.length > 4 && (
-                        <span className="text-[10px] font-mono text-white/20">
-                          +{workflow.steps.length - 4} more
-                        </span>
+                        )}
+                      </div>
+
+                      {/* ── Inline quick-run progress panel ── */}
+                      {qrs && (
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono text-white/40">
+                              {qrs.finished
+                                ? qrs.stepStatuses.some((s) => s === "error")
+                                  ? "❌ Run failed"
+                                  : "✓ Completed"
+                                : `Running ${doneCount + 1}/${workflow.steps.length} steps…`}
+                            </span>
+                            <span className="text-[10px] font-mono text-white/30">
+                              {progressPct}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={progressPct}
+                            className="h-1 bg-white/5"
+                          />
+                          {/* Current step label */}
+                          {!qrs.finished && (
+                            <div className="flex items-center gap-1.5">
+                              <Loader2 className="w-2.5 h-2.5 animate-spin text-[#4ade80]" />
+                              <span className="text-[10px] font-mono text-[#4ade80]/70 truncate">
+                                {workflow.steps[qrs.currentStep]?.label}
+                              </span>
+                            </div>
+                          )}
+                          {/* Error message */}
+                          {qrs.finished &&
+                            qrs.stepStatuses.some((s) => s === "error") && (
+                              <p className="text-[10px] font-mono text-red-400">
+                                {
+                                  qrs.stepMessages[
+                                    qrs.stepStatuses.indexOf("error")
+                                  ]
+                                }
+                              </p>
+                            )}
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      size="sm"
-                      data-ocid={`workflows.run_button.${index + 1}`}
-                      onClick={() => setRunTarget(workflow)}
-                      disabled={workflow.steps.length === 0}
-                      className="h-8 gap-1.5 text-[11px] font-mono bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80]"
-                    >
-                      <Play className="w-3 h-3" />
-                      Run
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      data-ocid={`workflows.duplicate_button.${index + 1}`}
-                      onClick={() => handleDuplicate(workflow)}
-                      title="Duplicate workflow"
-                      className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      data-ocid={`workflows.edit_button.${index + 1}`}
-                      onClick={() => handleEdit(workflow)}
-                      className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
-                    >
-                      <WorkflowIcon className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      data-ocid={`workflows.delete_button.${index + 1}`}
-                      onClick={() => handleDelete(workflow.id)}
-                      className="h-8 w-8 p-0 text-white/40 hover:text-red-400 hover:bg-red-400/10"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* ⚡ Quick Run button */}
+                      <Button
+                        size="sm"
+                        data-ocid={`workflows.quick_run_button.${index + 1}`}
+                        onClick={() => handleQuickRun(workflow)}
+                        disabled={
+                          isQuickRunning ||
+                          workflow.steps.length === 0 ||
+                          !!runTarget
+                        }
+                        className="h-8 gap-1.5 text-[11px] font-mono bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isQuickRunning ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Zap className="w-3 h-3" />
+                        )}
+                        Quick Run
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        data-ocid={`workflows.run_button.${index + 1}`}
+                        onClick={() => setRunTarget(workflow)}
+                        disabled={workflow.steps.length === 0 || isQuickRunning}
+                        className="h-8 gap-1.5 text-[11px] font-mono bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Play className="w-3 h-3" />
+                        Run
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-ocid={`workflows.duplicate_button.${index + 1}`}
+                        onClick={() => handleDuplicate(workflow)}
+                        title="Duplicate workflow"
+                        className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-ocid={`workflows.edit_button.${index + 1}`}
+                        onClick={() => handleEdit(workflow)}
+                        className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
+                      >
+                        <WorkflowIcon className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-ocid={`workflows.delete_button.${index + 1}`}
+                        onClick={() => handleDelete(workflow.id)}
+                        className="h-8 w-8 p-0 text-white/40 hover:text-red-400 hover:bg-red-400/10"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -1086,6 +1620,11 @@ export default function WorkflowsPage() {
         workflow={runTarget}
         onClose={() => setRunTarget(null)}
         onRunComplete={handleRunComplete}
+      />
+      <PresetModal
+        open={presetModalOpen}
+        onClose={() => setPresetModalOpen(false)}
+        onUsePreset={handleUsePreset}
       />
     </div>
   );
