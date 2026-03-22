@@ -1,26 +1,28 @@
 # GitHub AI Explorer
 
 ## Current State
-Full-featured GitHub explorer with terminal (local bridge), AI assistant panel, repo discovery, bookmarking, forking via PAT, Docker/Termux generation, analytics dashboards, profile/settings, session persistence via Internet Identity. Terminal has an AI assistant panel and command palette.
+Full-featured GitHub explorer with: repo discovery, bookmarks, AI analysis, terminal with local bridge (always docked), Docker integration, workflow builder with Quick Run + presets, AI pair programmer panel, commit message generator, repo comparison tool, analytics dashboards (star history, activity heatmap, issue tracker, PR pulse, CI/CD viewer, batch export), advanced AI command suggestions, bridge scripts, profile/settings, Internet Identity auth.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **Custom Workflow Builder** (#13): New page/section to create, save, and run reusable global workflows. Each workflow is a named sequence of steps (e.g., fork repo, generate setup script, open terminal, run install commands). Stored in localStorage. Users can create, edit, delete, reorder steps, and run workflows.
-- **AI Pair Programmer Panel** (#11): Side panel accessible from terminal toolbar. User describes in plain English what they want to build; AI generates code snippets, commands, or step-by-step instructions in a conversational interface. Generated commands can be copied or run directly in the terminal.
+- **GitHub Gist Explorer page** (`/gists`): Browse trending public gists, search by keyword, view gist file contents, fork gists via PAT, save/bookmark gists.
+- **Team Collaboration page** (`/teams`): Create teams via Internet Identity, invite members by principal, share bookmarks and repos within team, view team activity feed.
+- **Notifications & Alerts center** (`/notifications`): In-app notification center showing repo activity alerts (new stars, issues, PRs), watch list updates, CI/CD status changes, team activity. Stored per user in backend.
+- Backend types and methods for teams, team members, team shared bookmarks, and notifications/alerts.
+- Nav links for Gists, Teams, Notifications in Layout.
 
 ### Modify
-- App.tsx: Add route `/workflows`
-- TerminalPage: Add Pair Programmer panel toggle button in toolbar
-- Layout/navigation: Add Workflows nav link
+- Backend: add Team, TeamMember, Notification types and CRUD methods.
+- Layout: add nav items for new pages.
 
 ### Remove
-- Nothing
+- Nothing removed.
 
 ## Implementation Plan
-1. Create WorkflowsPage.tsx with list, create/edit/delete/run workflows
-2. Create WorkflowBuilderModal.tsx for creating/editing workflow steps
-3. Create WorkflowRunModal.tsx for executing workflow step-by-step
-4. Create AIPairProgrammerPanel.tsx in components/Terminal/
-5. Update App.tsx, TerminalPage.tsx, and Layout.tsx
-6. Workflow data stored in localStorage (github-explorer-workflows)
+1. Add backend types: Team (id, name, ownerId, memberIds, sharedBookmarks, createdAt), Notification (id, userId, type, title, body, read, createdAt).
+2. Add backend methods: createTeam, getMyTeams, addTeamMember, getTeamSharedBookmarks, addTeamBookmark, getNotifications, markNotificationRead, addNotification, clearNotifications.
+3. Build GistExplorerPage: search/browse gists via GitHub API, view files, fork via PAT.
+4. Build TeamsPage: create/join teams, member list, shared bookmarks tab, team activity.
+5. Build NotificationsPage: list notifications, mark read, clear all, filter by type.
+6. Wire nav links in Layout for all three pages.

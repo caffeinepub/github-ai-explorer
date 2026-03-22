@@ -17,8 +17,10 @@ import BridgeSetupPage from "./pages/BridgeSetupPage";
 import CICDPage from "./pages/CICDPage";
 import CommitMessagePage from "./pages/CommitMessagePage";
 import DockerPage from "./pages/DockerPage";
+import GistExplorerPage from "./pages/GistExplorerPage";
 import HomePage from "./pages/HomePage";
 import IssueTrackerPage from "./pages/IssueTrackerPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import PRPulsePage from "./pages/PRPulsePage";
 import ProfileHomePage from "./pages/ProfileHomePage";
 import RepoComparePage from "./pages/RepoComparePage";
@@ -26,6 +28,7 @@ import RepoDetailsPage from "./pages/RepoDetailsPage";
 import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
 import StarHistoryPage from "./pages/StarHistoryPage";
+import TeamsPage from "./pages/TeamsPage";
 import TerminalPage from "./pages/TerminalPage";
 import TrendingPage from "./pages/TrendingPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
@@ -145,6 +148,21 @@ const compareRoute = createRoute({
   path: "/compare",
   component: RepoComparePage,
 });
+const gistsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/gists",
+  component: GistExplorerPage,
+});
+const teamsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/teams",
+  component: TeamsPage,
+});
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/notifications",
+  component: NotificationsPage,
+});
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -165,6 +183,9 @@ const routeTree = rootRoute.addChildren([
   workflowsRoute,
   commitMsgRoute,
   compareRoute,
+  gistsRoute,
+  teamsRoute,
+  notificationsRoute,
 ]);
 
 const router = createRouter({ routeTree });

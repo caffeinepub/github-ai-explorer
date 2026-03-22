@@ -89,6 +89,15 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface Notification {
+    id: string;
+    title: string;
+    body: string;
+    userId: Principal;
+    notificationType: string;
+    createdAt: bigint;
+    read: boolean;
+}
 export interface TerminalSession {
     id: string;
     lastUsedAt: bigint;
@@ -103,6 +112,13 @@ export interface TerminalSession {
 export interface UserProfile {
     name: string;
 }
+export interface Team {
+    id: string;
+    ownerId: Principal;
+    name: string;
+    createdAt: bigint;
+    sharedBookmarks: Array<string>;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -110,17 +126,53 @@ export enum UserRole {
 }
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    addNotification(title: string, body: string): Promise<void>;
+    /**
+     * / Add team shared bookmark
+     */
+    addTeamBookmark(teamId: string, repoId: string): Promise<void>;
+    /**
+     * / Add team member
+     */
+    addTeamMember(teamId: string, userId: Principal): Promise<void>;
     appendOutput(sessionId: string, output: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     clearGitHubPAT(): Promise<void>;
+    clearNotifications(): Promise<void>;
+    /**
+     * / Create a new team
+     */
+    createTeam(teamId: string, name: string): Promise<Team>;
     deleteTerminalSession(sessionId: string): Promise<void>;
     getCachedData(key: string): Promise<string | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getGitHubPAT(): Promise<string | null>;
+    /**
+     * / Get my teams (teams where I am a member)
+     */
+    getMyTeams(): Promise<Array<Team>>;
+    getNotifications(): Promise<Array<Notification>>;
+    /**
+     * / Get team shared bookmarks
+     */
+    getTeamBookmarks(teamId: string): Promise<Array<string>>;
+    /**
+     * / Get team members
+     */
+    getTeamMembers(teamId: string): Promise<Array<Principal>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     loadTerminalSessions(): Promise<Array<TerminalSession>>;
+    markNotificationRead(notificationId: string): Promise<void>;
+    /**
+     * / Remove team shared bookmark
+     */
+    removeTeamBookmark(teamId: string, repoId: string): Promise<void>;
+    /**
+     * / Remove team member
+     */
+    removeTeamMember(teamId: string, userId: Principal): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     saveGitHubPAT(pat: string): Promise<void>;
     saveTerminalSession(session: TerminalSession): Promise<void>;
@@ -141,6 +193,48 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor._initializeAccessControlWithSecret(arg0);
+            return result;
+        }
+    }
+    async addNotification(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addNotification(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addNotification(arg0, arg1);
+            return result;
+        }
+    }
+    async addTeamBookmark(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addTeamBookmark(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addTeamBookmark(arg0, arg1);
+            return result;
+        }
+    }
+    async addTeamMember(arg0: string, arg1: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addTeamMember(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addTeamMember(arg0, arg1);
             return result;
         }
     }
@@ -183,6 +277,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.clearGitHubPAT();
+            return result;
+        }
+    }
+    async clearNotifications(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.clearNotifications();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.clearNotifications();
+            return result;
+        }
+    }
+    async createTeam(arg0: string, arg1: string): Promise<Team> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createTeam(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createTeam(arg0, arg1);
             return result;
         }
     }
@@ -256,6 +378,62 @@ export class Backend implements backendInterface {
             return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getMyTeams(): Promise<Array<Team>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyTeams();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyTeams();
+            return result;
+        }
+    }
+    async getNotifications(): Promise<Array<Notification>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getNotifications();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getNotifications();
+            return result;
+        }
+    }
+    async getTeamBookmarks(arg0: string): Promise<Array<string>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTeamBookmarks(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTeamBookmarks(arg0);
+            return result;
+        }
+    }
+    async getTeamMembers(arg0: string): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTeamMembers(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTeamMembers(arg0);
+            return result;
+        }
+    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
@@ -295,6 +473,48 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.loadTerminalSessions();
+            return result;
+        }
+    }
+    async markNotificationRead(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markNotificationRead(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markNotificationRead(arg0);
+            return result;
+        }
+    }
+    async removeTeamBookmark(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removeTeamBookmark(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removeTeamBookmark(arg0, arg1);
+            return result;
+        }
+    }
+    async removeTeamMember(arg0: string, arg1: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removeTeamMember(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removeTeamMember(arg0, arg1);
             return result;
         }
     }

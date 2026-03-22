@@ -11,10 +11,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
+  Bell,
   Bookmark,
   ChevronDown,
   ChevronUp,
   Code,
+  FileCode,
   GitBranch,
   GitCommit,
   Heart,
@@ -30,10 +32,14 @@ import {
   Terminal,
   TrendingUp,
   User,
+  Users,
 } from "lucide-react";
 import React, { Suspense, useState } from "react";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useGetCallerUserProfile } from "../hooks/useQueries";
+import {
+  useGetCallerUserProfile,
+  useGetNotifications,
+} from "../hooks/useQueries";
 import { useTheme } from "../hooks/useTheme";
 import { GithubTokenSettings } from "./GithubTokenSettings";
 
@@ -46,6 +52,30 @@ function getInitials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+function NotificationBell() {
+  const { identity } = useInternetIdentity();
+  const { data: notifications } = useGetNotifications();
+  const unreadCount = identity
+    ? (notifications || []).filter((n) => !n.read).length
+    : 0;
+
+  return (
+    <Link
+      to="/notifications"
+      data-ocid="nav.notifications.link"
+      className="relative flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+      title="Notifications"
+    >
+      <Bell className="w-4 h-4" />
+      {unreadCount > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
+          {unreadCount > 9 ? "9+" : unreadCount}
+        </span>
+      )}
+    </Link>
+  );
 }
 
 export default function Layout() {
@@ -136,6 +166,22 @@ export default function Layout() {
                 Bookmarks
               </Link>
               <Link
+                to="/gists"
+                data-ocid="nav.gists.link"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <FileCode className="w-4 h-4" />
+                Gists
+              </Link>
+              <Link
+                to="/teams"
+                data-ocid="nav.teams.link"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Teams
+              </Link>
+              <Link
                 to="/workflows"
                 data-ocid="nav.workflows.link"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
@@ -170,6 +216,8 @@ export default function Layout() {
             </nav>
 
             <div className="flex items-center gap-2">
+              <NotificationBell />
+
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -289,6 +337,22 @@ export default function Layout() {
               Bookmarks
             </Link>
             <Link
+              to="/gists"
+              data-ocid="nav.gists.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <FileCode className="w-3.5 h-3.5" />
+              Gists
+            </Link>
+            <Link
+              to="/teams"
+              data-ocid="nav.teams.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <Users className="w-3.5 h-3.5" />
+              Teams
+            </Link>
+            <Link
               to="/workflows"
               data-ocid="nav.workflows.link"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
@@ -319,6 +383,14 @@ export default function Layout() {
             >
               <Terminal className="w-3.5 h-3.5" />
               Terminal
+            </Link>
+            <Link
+              to="/notifications"
+              data-ocid="nav.notifications.link"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              Alerts
             </Link>
           </div>
         </div>

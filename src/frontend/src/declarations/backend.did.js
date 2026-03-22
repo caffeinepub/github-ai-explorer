@@ -13,7 +13,23 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const Team = IDL.Record({
+  'id' : IDL.Text,
+  'ownerId' : IDL.Principal,
+  'name' : IDL.Text,
+  'createdAt' : IDL.Int,
+  'sharedBookmarks' : IDL.Vec(IDL.Text),
+});
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const Notification = IDL.Record({
+  'id' : IDL.Text,
+  'title' : IDL.Text,
+  'body' : IDL.Text,
+  'userId' : IDL.Principal,
+  'notificationType' : IDL.Text,
+  'createdAt' : IDL.Int,
+  'read' : IDL.Bool,
+});
 export const TerminalSession = IDL.Record({
   'id' : IDL.Text,
   'lastUsedAt' : IDL.Int,
@@ -28,14 +44,23 @@ export const TerminalSession = IDL.Record({
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addNotification' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'addTeamBookmark' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'addTeamMember' : IDL.Func([IDL.Text, IDL.Principal], [], []),
   'appendOutput' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'clearGitHubPAT' : IDL.Func([], [], []),
+  'clearNotifications' : IDL.Func([], [], []),
+  'createTeam' : IDL.Func([IDL.Text, IDL.Text], [Team], []),
   'deleteTerminalSession' : IDL.Func([IDL.Text], [], []),
   'getCachedData' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getGitHubPAT' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+  'getMyTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
+  'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
+  'getTeamBookmarks' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
+  'getTeamMembers' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Principal)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -43,6 +68,9 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'loadTerminalSessions' : IDL.Func([], [IDL.Vec(TerminalSession)], ['query']),
+  'markNotificationRead' : IDL.Func([IDL.Text], [], []),
+  'removeTeamBookmark' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'removeTeamMember' : IDL.Func([IDL.Text, IDL.Principal], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'saveGitHubPAT' : IDL.Func([IDL.Text], [], []),
   'saveTerminalSession' : IDL.Func([TerminalSession], [], []),
@@ -58,7 +86,23 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const Team = IDL.Record({
+    'id' : IDL.Text,
+    'ownerId' : IDL.Principal,
+    'name' : IDL.Text,
+    'createdAt' : IDL.Int,
+    'sharedBookmarks' : IDL.Vec(IDL.Text),
+  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const Notification = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'body' : IDL.Text,
+    'userId' : IDL.Principal,
+    'notificationType' : IDL.Text,
+    'createdAt' : IDL.Int,
+    'read' : IDL.Bool,
+  });
   const TerminalSession = IDL.Record({
     'id' : IDL.Text,
     'lastUsedAt' : IDL.Int,
@@ -73,14 +117,27 @@ export const idlFactory = ({ IDL }) => {
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addNotification' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'addTeamBookmark' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'addTeamMember' : IDL.Func([IDL.Text, IDL.Principal], [], []),
     'appendOutput' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'clearGitHubPAT' : IDL.Func([], [], []),
+    'clearNotifications' : IDL.Func([], [], []),
+    'createTeam' : IDL.Func([IDL.Text, IDL.Text], [Team], []),
     'deleteTerminalSession' : IDL.Func([IDL.Text], [], []),
     'getCachedData' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getGitHubPAT' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+    'getMyTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
+    'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
+    'getTeamBookmarks' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
+    'getTeamMembers' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(IDL.Principal)],
+        ['query'],
+      ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -92,6 +149,9 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TerminalSession)],
         ['query'],
       ),
+    'markNotificationRead' : IDL.Func([IDL.Text], [], []),
+    'removeTeamBookmark' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'removeTeamMember' : IDL.Func([IDL.Text, IDL.Principal], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'saveGitHubPAT' : IDL.Func([IDL.Text], [], []),
     'saveTerminalSession' : IDL.Func([TerminalSession], [], []),

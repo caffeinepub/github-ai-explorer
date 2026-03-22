@@ -10,6 +10,22 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface Notification {
+  'id' : string,
+  'title' : string,
+  'body' : string,
+  'userId' : Principal,
+  'notificationType' : string,
+  'createdAt' : bigint,
+  'read' : boolean,
+}
+export interface Team {
+  'id' : string,
+  'ownerId' : Principal,
+  'name' : string,
+  'createdAt' : bigint,
+  'sharedBookmarks' : Array<string>,
+}
 export interface TerminalSession {
   'id' : string,
   'lastUsedAt' : bigint,
@@ -27,17 +43,53 @@ export type UserRole = { 'admin' : null } |
   { 'guest' : null };
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addNotification' : ActorMethod<[string, string], undefined>,
+  /**
+   * / Add team shared bookmark
+   */
+  'addTeamBookmark' : ActorMethod<[string, string], undefined>,
+  /**
+   * / Add team member
+   */
+  'addTeamMember' : ActorMethod<[string, Principal], undefined>,
   'appendOutput' : ActorMethod<[string, string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'clearGitHubPAT' : ActorMethod<[], undefined>,
+  'clearNotifications' : ActorMethod<[], undefined>,
+  /**
+   * / Create a new team
+   */
+  'createTeam' : ActorMethod<[string, string], Team>,
   'deleteTerminalSession' : ActorMethod<[string], undefined>,
   'getCachedData' : ActorMethod<[string], [] | [string]>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getGitHubPAT' : ActorMethod<[], [] | [string]>,
+  /**
+   * / Get my teams (teams where I am a member)
+   */
+  'getMyTeams' : ActorMethod<[], Array<Team>>,
+  'getNotifications' : ActorMethod<[], Array<Notification>>,
+  /**
+   * / Get team shared bookmarks
+   */
+  'getTeamBookmarks' : ActorMethod<[string], Array<string>>,
+  /**
+   * / Get team members
+   */
+  'getTeamMembers' : ActorMethod<[string], Array<Principal>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'loadTerminalSessions' : ActorMethod<[], Array<TerminalSession>>,
+  'markNotificationRead' : ActorMethod<[string], undefined>,
+  /**
+   * / Remove team shared bookmark
+   */
+  'removeTeamBookmark' : ActorMethod<[string, string], undefined>,
+  /**
+   * / Remove team member
+   */
+  'removeTeamMember' : ActorMethod<[string, Principal], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'saveGitHubPAT' : ActorMethod<[string], undefined>,
   'saveTerminalSession' : ActorMethod<[TerminalSession], undefined>,

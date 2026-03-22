@@ -1,3 +1,4 @@
+import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { UserProfile } from "../backend";
@@ -237,6 +238,153 @@ export function useRemoveMyGithubToken() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["githubToken"] });
+    },
+  });
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────
+
+export function useGetNotifications() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getNotifications();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useAddNotification() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ title, body }: { title: string; body: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.addNotification(title, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useMarkNotificationRead() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.markNotificationRead(notificationId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useClearNotifications() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.clearNotifications();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+// ── Teams ─────────────────────────────────────────────────────────────────
+
+export function useGetMyTeams() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["myTeams"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyTeams();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useCreateTeam() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teamId, name }: { teamId: string; name: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.createTeam(teamId, name);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myTeams"] });
+    },
+  });
+}
+
+export function useGetTeamMembers(teamId: string) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["teamMembers", teamId],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getTeamMembers(teamId);
+    },
+    enabled: !!actor && !actorFetching && !!teamId,
+  });
+}
+
+export function useGetTeamBookmarks(teamId: string) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["teamBookmarks", teamId],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getTeamBookmarks(teamId);
+    },
+    enabled: !!actor && !actorFetching && !!teamId,
+  });
+}
+
+export function useAddTeamMember() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      teamId,
+      userId,
+    }: { teamId: string; userId: Principal }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.addTeamMember(teamId, userId);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["teamMembers", variables.teamId],
+      });
+    },
+  });
+}
+
+export function useAddTeamBookmark() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      teamId,
+      repoId,
+    }: { teamId: string; repoId: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.addTeamBookmark(teamId, repoId);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["teamBookmarks", variables.teamId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["myTeams"] });
     },
   });
 }
